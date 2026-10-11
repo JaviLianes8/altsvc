@@ -8,4 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [0.1.0]
 
-- First release.
+- Parse an Alt-Svc header value into a list of alternatives, each with protocol,
+  authority and parameters, following RFC 7838.
+- Build an Alt-Svc header value from alternatives, quoting the authority and parameter
+  values as needed.
+- Support the `clear` token, quoted-string authorities and values, the `ma` and
+  `persist` parameters, multiple comma-separated alternatives, and tolerant skipping of
+  malformed entries.
