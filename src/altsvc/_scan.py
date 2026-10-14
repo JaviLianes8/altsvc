@@ -71,7 +71,7 @@ def _quoted(text: str, index: int) -> tuple[str, int]:
         if char == "\\" and position + 1 < len(text) and is_pair_char(text[position + 1]):
             out.append(text[position + 1])
             position += 2
-        elif char != "\\" and is_qdtext(char):
+        elif is_qdtext(char):  # the backslash is not qdtext
             out.append(char)
             position += 1
         else:

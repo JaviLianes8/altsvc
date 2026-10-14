@@ -2,20 +2,20 @@
 
 Progress:
 - [x] Brainstorm ranked improvements (this file)
-- [ ] Pin the ground truth: RFC 7838 and its errata, RFC 9110, RFC 9111, RFC 3986, RFC 9114, RFC 9460, the IANA ALPN and Alt-Svc parameter registries, the quiche and curl parsers
-- [ ] Grammar-driven scanner with offsets: tokens, quoted strings, OWS, empty list elements, recovery
-- [ ] Strict and tolerant reading, several field lines, the clear token
-- [ ] Protocol-id percent-encoding: decode, canonical encode, typed ALPN access
-- [ ] Alt-authority: host and port, IP literals, A-labels
-- [ ] Parameters: ma (ASCII digits, 2^31 ceiling, 86400 default), persist, duplicates, unknown names
-- [ ] Linter: every finding with a code, a severity and an offset
-- [ ] Cache helper: expiry and freshness from ma and Age, injected clock
-- [ ] Safe builder: no header injection, canonical protocol-id, strict round trip
-- [ ] Command line
-- [ ] Contracts: pinned sources, README examples, typing, installed wheel
-- [ ] Docs and packaging: README, CHANGELOG, metadata, sdist contents
-- [ ] Gates: ruff format, ruff check, mypy --strict, pytest
-- [ ] Mutation run: removing guarded logic makes the suite fail
+- [x] Pin the ground truth: RFC 7838 and its errata, RFC 9110, RFC 9111, RFC 3986, RFC 9114, RFC 9460, the IANA ALPN and Alt-Svc parameter registries, the quiche and curl parsers
+- [x] Grammar-driven scanner with offsets: tokens, quoted strings, OWS, empty list elements, recovery
+- [x] Strict and tolerant reading, several field lines, the clear token
+- [x] Protocol-id percent-encoding: decode, canonical encode, typed ALPN access
+- [x] Alt-authority: host and port, IP literals, A-labels
+- [x] Parameters: ma (ASCII digits, 2^31 ceiling, 86400 default), persist, duplicates, unknown names
+- [x] Linter: every finding with a code, a severity and an offset
+- [x] Cache helper: expiry and freshness from ma and Age, injected clock
+- [x] Safe builder: no header injection, canonical protocol-id, strict round trip
+- [x] Command line
+- [x] Contracts: pinned sources, README examples, typing, installed wheel
+- [x] Docs and packaging: README, CHANGELOG, metadata, sdist contents
+- [x] Gates: ruff format, ruff check, mypy --strict, pytest
+- [x] Mutation run: removing guarded logic makes the suite fail
 - [ ] Independent review findings fixed with regression tests
 - [ ] Pull request opened, guard clean
 
