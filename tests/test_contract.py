@@ -6,10 +6,18 @@ import altsvc
 # contract and the test below fails if the module and this list disagree.
 PUBLIC_API: list[str] = [
     "CLEAR",
-    "Alternative",
+    "DEFAULT_MAX_AGE",
+    "DELTA_SECONDS_MAX",
     "AltSvcError",
+    "Alternative",
     "Clear",
+    "Issue",
     "build",
+    "decode_protocol_id",
+    "encode_protocol_id",
+    "expires_at",
+    "is_fresh",
+    "lint",
     "parse",
 ]
 
