@@ -59,3 +59,18 @@ def test_build_refuses_a_huge_ma_without_converting_it() -> None:
 def test_a_field_in_the_body_after_the_head_is_not_read() -> None:
     text = 'HTTP/1.1 200 OK\r\nAlt-Svc: h3=":443"\r\n\r\nAlt-Svc: clear\r\n'
     assert field_lines(text) == ("200", ['h3=":443"'])
+
+
+def test_an_ip_literal_of_hex_digits_must_still_be_an_ipv6_address() -> None:
+    for host in ("[1:2]", "[12345::]", "[::1::2]", "[]"):
+        with pytest.raises(AltSvcError):
+            split_authority(host + ":443")
+
+
+def test_tolerant_reading_drops_a_protocol_id_with_a_broken_escape() -> None:
+    assert parse('h3%4=":443", h2=":443"') == [Alternative("h2", ":443")]
+
+
+def test_a_body_line_like_a_four_digit_status_does_not_start_a_response() -> None:
+    text = 'HTTP/1.1 200 OK\r\nAlt-Svc: h3=":443"\r\n\r\nHTTP/1.1 2000\r\nAlt-Svc: x\r\n'
+    assert field_lines(text) == ("200", ['h3=":443"'])

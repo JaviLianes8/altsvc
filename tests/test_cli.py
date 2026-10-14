@@ -101,6 +101,9 @@ def test_a_421_response_is_ignored(
     assert report["ignored"] is True and report["clear"] is False
     assert report["alternatives"] == []
     assert [issue["code"] for issue in report["issues"]] == ["clear.mixed", "status.421"]
+    head = b'HTTP/1.1 421 Misdirected Request\nAlt-Svc: h3=":443"\n\n'
+    code, report, _ = _run(monkeypatch, capsys, [], head)
+    assert code == 1 and report["valid"] is True and report["ignored"] is True
     head = b'HTTP/2 200\nAlt-Svc: h3=":443"\n\n'
     code, report, _ = _run(monkeypatch, capsys, [], head)
     assert code == 0 and report["ignored"] is False

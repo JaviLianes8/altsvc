@@ -85,7 +85,7 @@ def split_authority(authority: str) -> tuple[str, int]:
         raise AltSvcError(f"no ':port' in alt-authority {authority!r}", code="authority.port")
     # Leading zeros are allowed (port = *DIGIT); long digit strings are never converted.
     digits = port.lstrip("0")
-    if not (port and set(port) <= DIGITS and 0 < len(digits) <= 5 and int(digits) <= MAX_PORT):
+    if not (set(port) <= DIGITS and 0 < len(digits) <= 5 and int(digits) <= MAX_PORT):
         raise AltSvcError(
             f"port must be 1 to {MAX_PORT} in {authority!r}",
             code="authority.port",

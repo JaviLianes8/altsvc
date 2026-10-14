@@ -120,6 +120,32 @@ Progress:
 - Resolving SVCB or HTTPS records (RFC 9460); only the relation to Alt-Svc is documented.
 - Legacy Google QUIC parameters (`v`, `quic`) that quiche still reads.
 
+## Verification
+
+- Gates on CPython 3.14 from a fresh clone of the branch on another machine, after the
+  fetch script had fetched every source and matched the manifest: `ruff format --check .`,
+  `ruff check .`, `mypy --strict src` and `pytest` exit 0. With `ALTSVC_E2E=1` the
+  installed-wheel test builds the wheel and sdist, checks their contents (no planning notes,
+  no fetched files, the manifest, the fetch script and the entry point present), installs
+  the wheel in a fresh venv and drives the API, the `altsvc` script and `python -m altsvc`
+  from an empty folder. Without the fetched files their tests skip and the rest passes.
+- RFC 7838 field examples, its escaping table and the Age example, the RFC 9114 and RFC 9460
+  examples, the RFC 9110 and RFC 3986 character sets, the RFC 9111 ceiling, the HTTP rows of
+  the IANA ALPN registry, the IANA parameter registry and the quiche and curl defaults are
+  read from the pinned files in `tests/test_sources.py`.
+- Guarded logic was changed one piece at a time, with no bytecode, a purged cache and a
+  timeout per mutant, the suite green before and after. First run: 83 mutants, 13 alive;
+  tests were added for nine, one guard that could never fail was removed, three are
+  equivalent. Second run after the review fixes: 99 mutants, 8 alive; tests were added for
+  four (an IP literal of hex digits that is not IPv6, a broken escape dropped by the tolerant
+  reading, a four digit status in a body, a valid field in a 421 response), one redundant
+  condition was removed, and three are equivalent: the length guards before an integer
+  conversion (in `ma` and in the port) only keep long digit strings from being converted,
+  and resuming after junk from the element start or from the junk reaches the same comma.
+- Seeded random checks: 2000 built values survive a strict round trip, and 3000 random
+  strings go through `lint` and both reading modes raising nothing but `AltSvcError`, with
+  the tolerant result equal to the strict one whenever strict reading accepts.
+
 ## Review fixes
 
 An independent review attacked the branch; each finding below is fixed with a test that
