@@ -1,90 +1,28 @@
-"""Parse an Alt-Svc header value into alternatives or the clear token."""
+"""Read an Alt-Svc field value into alternatives or the clear token."""
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
+from ._errors import AltSvcError
+from ._lint import analyse
 from ._model import CLEAR, Alternative, Clear
 
 
-def parse(header: str) -> list[Alternative] | Clear:
-    """Parse an Alt-Svc header value.
+def parse(value: str | Sequence[str], *, strict: bool = False) -> list[Alternative] | Clear:
+    """Read an Alt-Svc field value, or several field lines combined as one list.
 
-    Returns :data:`CLEAR` for the ``clear`` token, otherwise the list of alternatives
-    that could be read. Alternatives that are malformed are skipped, as RFC 7838 asks
-    recipients to do, so a single bad entry never discards the valid ones.
+    Returns :data:`CLEAR` when the value holds the ``clear`` token (section 3 of RFC 7838:
+    it invalidates every alternative, even those next to it), otherwise the alternatives
+    in the server's order of preference.
+
+    With ``strict=True`` the first error raises :class:`AltSvcError` with its code and
+    offset. The default tolerant mode keeps every alternative whose protocol-id,
+    authority and ``ma`` are sound, and ignores broken parameters of other names; this is
+    a robustness choice of this library, see :func:`lint` for what was skipped.
     """
-    text = header.strip()
-    if text == "clear":
-        return CLEAR
-    result: list[Alternative] = []
-    for segment in _split(text, ","):
-        alternative = _parse_alternative(segment)
-        if alternative is not None:
-            result.append(alternative)
-    return result
-
-
-def _parse_alternative(segment: str) -> Alternative | None:
-    pieces = [piece.strip() for piece in _split(segment, ";")]
-    pieces = [piece for piece in pieces if piece]
-    if not pieces:
-        return None
-    name, sep, raw = pieces[0].partition("=")
-    protocol = name.strip()
-    authority = _unquote(raw.strip())
-    if not sep or not protocol or authority is None:
-        return None
-    params: dict[str, str] = {}
-    for piece in pieces[1:]:
-        key, eq, value = piece.partition("=")
-        key = key.strip()
-        if key:
-            params[key] = _value(value.strip()) if eq else ""
-    return Alternative(protocol, authority, params)
-
-
-def _split(text: str, separator: str) -> list[str]:
-    """Split on a separator that sits outside a quoted-string."""
-    parts: list[str] = []
-    current: list[str] = []
-    quoted = False
-    escaped = False
-    for char in text:
-        if escaped:
-            current.append(char)
-            escaped = False
-        elif char == "\\" and quoted:
-            current.append(char)
-            escaped = True
-        elif char == '"':
-            quoted = not quoted
-            current.append(char)
-        elif char == separator and not quoted:
-            parts.append("".join(current))
-            current = []
-        else:
-            current.append(char)
-    parts.append("".join(current))
-    return parts
-
-
-def _unquote(value: str) -> str | None:
-    """Return the content of a quoted-string, or ``None`` when ``value`` is not quoted."""
-    if len(value) < 2 or value[0] != '"' or value[-1] != '"':
-        return None
-    inner = value[1:-1]
-    out: list[str] = []
-    index = 0
-    while index < len(inner):
-        char = inner[index]
-        if char == "\\" and index + 1 < len(inner):
-            out.append(inner[index + 1])
-            index += 2
-        else:
-            out.append(char)
-            index += 1
-    return "".join(out)
-
-
-def _value(raw: str) -> str:
-    unquoted = _unquote(raw)
-    return unquoted if unquoted is not None else raw
+    analysis = analyse(value)
+    if strict and analysis.errors:
+        first = analysis.errors[0]
+        raise AltSvcError(first.message, code=first.code, offset=first.offset)
+    return CLEAR if analysis.clear else analysis.alternatives

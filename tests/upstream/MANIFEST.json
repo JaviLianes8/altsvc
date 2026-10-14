@@ -1,0 +1,101 @@
+{
+  "rfc7838.txt": {
+    "title": "RFC 7838, HTTP Alternative Services (April 2016)",
+    "url": "https://www.rfc-editor.org/rfc/rfc7838.txt",
+    "revision": "RFC 7838 as published (RFCs are immutable)",
+    "licence": "IETF Trust Legal Provisions (https://trustee.ietf.org/license-info)",
+    "fetched": "2026-10-14",
+    "size": 42681,
+    "sha256": "ac2ee358ed7406e8128fc85ada8a1891de54b963bd7d47875e290a23a4e95021"
+  },
+  "rfc9110.txt": {
+    "title": "RFC 9110, HTTP Semantics (June 2022)",
+    "url": "https://www.rfc-editor.org/rfc/rfc9110.txt",
+    "revision": "RFC 9110 as published (RFCs are immutable)",
+    "licence": "IETF Trust Legal Provisions (https://trustee.ietf.org/license-info)",
+    "fetched": "2026-10-14",
+    "size": 502941,
+    "sha256": "21c1cdce6ab0e5509b04d84a28000836c7a087cf786efe6f04877ebfff47232a"
+  },
+  "rfc9111.txt": {
+    "title": "RFC 9111, HTTP Caching (June 2022)",
+    "url": "https://www.rfc-editor.org/rfc/rfc9111.txt",
+    "revision": "RFC 9111 as published (RFCs are immutable)",
+    "licence": "IETF Trust Legal Provisions (https://trustee.ietf.org/license-info)",
+    "fetched": "2026-10-14",
+    "size": 84477,
+    "sha256": "aeb52adb3279d5f23dae34f68af11bd5cef0a0aff7ffcd014c9ca93c5302cf3e"
+  },
+  "rfc3986.txt": {
+    "title": "RFC 3986, Uniform Resource Identifier: Generic Syntax (January 2005)",
+    "url": "https://www.rfc-editor.org/rfc/rfc3986.txt",
+    "revision": "RFC 3986 as published (RFCs are immutable)",
+    "licence": "IETF Trust Legal Provisions (https://trustee.ietf.org/license-info)",
+    "fetched": "2026-10-14",
+    "size": 141811,
+    "sha256": "3102dae4b68cebe40337730312fcb612297b8928547267e8b3d1ee6002b2d683"
+  },
+  "rfc9114.txt": {
+    "title": "RFC 9114, HTTP/3 (June 2022)",
+    "url": "https://www.rfc-editor.org/rfc/rfc9114.txt",
+    "revision": "RFC 9114 as published (RFCs are immutable)",
+    "licence": "IETF Trust Legal Provisions (https://trustee.ietf.org/license-info)",
+    "fetched": "2026-10-14",
+    "size": 155206,
+    "sha256": "6b84555c88eeebcf5d2b2e1d9d7b58630abc97ab877b2cf62dee4cd635db34e4"
+  },
+  "rfc9460.txt": {
+    "title": "RFC 9460, Service Binding and Parameter Specification via the DNS (November 2023)",
+    "url": "https://www.rfc-editor.org/rfc/rfc9460.txt",
+    "revision": "RFC 9460 as published (RFCs are immutable)",
+    "licence": "IETF Trust Legal Provisions (https://trustee.ietf.org/license-info)",
+    "fetched": "2026-10-14",
+    "size": 111648,
+    "sha256": "0741d5743b7b4cd54762e53633b597e442b3d8299b80a9d5f2acec6d9beae433"
+  },
+  "rfc7838-errata.html": {
+    "title": "RFC Editor errata page for RFC 7838",
+    "url": "https://www.rfc-editor.org/errata/rfc7838",
+    "revision": "page as fetched; it changes when an erratum is filed",
+    "licence": "IETF Trust Legal Provisions (https://trustee.ietf.org/license-info)",
+    "fetched": "2026-10-14",
+    "size": 18996,
+    "sha256": "01ffe9c2f049d99b687b2edb62c5df27f16b605e934bf2ccce07a593d533cb0b"
+  },
+  "alpn-protocol-ids.csv": {
+    "title": "IANA TLS ALPN Protocol IDs registry",
+    "url": "https://www.iana.org/assignments/tls-extensiontype-values/alpn-protocol-ids.csv",
+    "revision": "registry as fetched; it grows over time",
+    "licence": "IANA registry data, no licence stated; kept locally only",
+    "fetched": "2026-10-14",
+    "size": 5153,
+    "sha256": "4749b646ee88c3931edba66544e05898d808c6da3ab75ee3f0affbbb09834e99"
+  },
+  "http-alt-svc-parameters.xml": {
+    "title": "IANA HTTP Alt-Svc Parameter Registry",
+    "url": "https://www.iana.org/assignments/http-alt-svc-parameters/http-alt-svc-parameters.xml",
+    "revision": "registry as fetched (last updated 2016-04-08)",
+    "licence": "IANA registry data, no licence stated; kept locally only",
+    "fetched": "2026-10-14",
+    "size": 943,
+    "sha256": "cbfc802a46411cfc522054027d629a18881212c3928048662f22cc8679b31ab2"
+  },
+  "quiche-spdy_alt_svc_wire_format.cc": {
+    "title": "google/quiche spdy_alt_svc_wire_format.cc, the Alt-Svc parser used by Chromium",
+    "url": "https://raw.githubusercontent.com/google/quiche/132bfd90ea370faeacee616c70d10210bb12ba66/quiche/http2/core/spdy_alt_svc_wire_format.cc",
+    "revision": "google/quiche commit 132bfd90ea370faeacee616c70d10210bb12ba66",
+    "licence": "BSD-3-Clause (LICENSE in the same repository)",
+    "fetched": "2026-10-14",
+    "size": 12072,
+    "sha256": "486ac728d13b32662f61cc0202fe76fea4a1dbabad4d742bad1e2dacf7010e09"
+  },
+  "curl-altsvc.c": {
+    "title": "curl lib/altsvc.c, the Alt-Svc parser and cache of curl",
+    "url": "https://raw.githubusercontent.com/curl/curl/9a6d4ffc1b6c184fb2ec7c6e4879c835cb367689/lib/altsvc.c",
+    "revision": "curl/curl commit 9a6d4ffc1b6c184fb2ec7c6e4879c835cb367689",
+    "licence": "curl licence (MIT style, COPYING in the same repository)",
+    "fetched": "2026-10-14",
+    "size": 21568,
+    "sha256": "716b0903765d0bede7556d4a7dd34071304f31866ea08f00c3ef3b8e39ca8f6b"
+  }
+}

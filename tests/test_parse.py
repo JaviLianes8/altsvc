@@ -54,9 +54,9 @@ def test_quoted_parameter_value() -> None:
     assert result == [Alternative("h2", ":443", {"note": "a;b"})]
 
 
-def test_escaped_quote_inside_authority() -> None:
-    result = parse('h2="say \\"hi\\":443"')
-    assert result == [Alternative("h2", 'say "hi":443')]
+def test_quoted_pair_inside_authority_stands_for_its_character() -> None:
+    result = parse(r'h2="alt\.example\:443"')
+    assert result == [Alternative("h2", "alt.example:443")]
 
 
 def test_surrounding_whitespace_is_ignored() -> None:

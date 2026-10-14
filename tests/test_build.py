@@ -26,16 +26,20 @@ def test_build_clear() -> None:
     assert build(CLEAR) == "clear"
 
 
-def test_build_empty_sequence() -> None:
-    assert build([]) == ""
+def test_build_refuses_an_empty_sequence() -> None:
+    with pytest.raises(AltSvcError) as caught:
+        build([])
+    assert caught.value.code == "empty"
 
 
 def test_build_quotes_non_token_parameter_value() -> None:
     assert build([Alternative("h2", ":443", {"note": "a b"})]) == 'h2=":443"; note="a b"'
 
 
-def test_build_escapes_quotes_in_authority() -> None:
-    assert build([Alternative("h2", 'x"y:443')]) == 'h2="x\\"y:443"'
+def test_build_refuses_a_quote_in_the_authority() -> None:
+    with pytest.raises(AltSvcError) as caught:
+        build([Alternative("h2", 'x"y:443')])
+    assert caught.value.code == "authority.host"
 
 
 def test_build_rejects_invalid_protocol() -> None:
