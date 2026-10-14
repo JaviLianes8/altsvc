@@ -15,6 +15,8 @@ HTTP_ALPN_IDS = frozenset({b"http/0.9", b"http/1.0", b"http/1.1", b"h2", b"h2c",
 
 MAX_PORT = 65535
 
+_IPV6 = HEXDIG | {":", "."}
+
 
 def encode_protocol_id(name: str | bytes) -> str:
     """Return the canonical protocol-id for an ALPN protocol name.
@@ -75,7 +77,8 @@ def split_authority(authority: str) -> tuple[str, int]:
 
     The host is an RFC 3986 reg-name or IPv4 address in ASCII (section 8 of RFC 7838 asks
     for A-labels), or an IPv6 literal in brackets, returned without them. The port is 1 to
-    65535: a port of 0 cannot be connected to.
+    65535. Library policy beyond RFC 3986: an empty port and port 0 cannot be connected
+    to, and IPvFuture literals and zone IDs are refused.
     """
     host, colon, port = authority.rpartition(":")
     if not colon:
@@ -89,7 +92,10 @@ def split_authority(authority: str) -> tuple[str, int]:
             offset=len(host),
         )
     if host.startswith("[") and host.endswith("]"):
+        # RFC 3986 IP-literals carry no zone ID, and ipaddress would take any text after "%".
         try:
+            if not set(host[1:-1]) <= _IPV6:
+                raise ValueError
             ipaddress.IPv6Address(host[1:-1])
         except ValueError:
             raise AltSvcError(f"bad IPv6 literal {host!r}", code="authority.host") from None

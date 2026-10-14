@@ -79,9 +79,6 @@ def test_of_encodes_brackets_and_adds_parameters() -> None:
         lambda: Alternative.of("h3", 443, "a b"),
         lambda: Alternative.of("h3", 443, ma=-1),
         lambda: Alternative.of("h3", 443, ma=2**31 + 1),
-        lambda: Alternative.of("h3", True),
-        lambda: Alternative.of("h3", 443, ma=True),
-        lambda: Alternative.of("h3", 443, persist=1),  # type: ignore[arg-type]
         lambda: Alternative.of("", 443),
         lambda: Alternative.of("h3", 443, params={"x": "a\r\nb"}),
     ],
@@ -105,7 +102,31 @@ def test_expiry_defaults_and_never_goes_back_in_time() -> None:
     assert not is_fresh(_one('h3=":443"; ma=0'), 5.0, 5.0)
 
 
-@pytest.mark.parametrize("age", [-1, True, 1.5])
-def test_expiry_refuses_a_bad_age(age: object) -> None:
-    with pytest.raises(AltSvcError):
-        expires_at(_one('h3=":443"'), 0.0, age=age)  # type: ignore[arg-type]
+def test_expiry_refuses_a_negative_age() -> None:
+    with pytest.raises(AltSvcError) as caught:
+        expires_at(_one('h3=":443"'), 0.0, age=-1)
+    assert caught.value.code == "age.negative"
+
+
+@pytest.mark.parametrize(
+    ("age", "received_at"), [(True, 0.0), (1.5, 0.0), (0, "0"), (0, False), (0, None)]
+)
+def test_expiry_refuses_wrong_types(age: object, received_at: object) -> None:
+    with pytest.raises(TypeError):
+        expires_at(_one('h3=":443"'), received_at, age=age)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda: Alternative.of("h3", True),
+        lambda: Alternative.of("h3", "443"),  # type: ignore[arg-type]
+        lambda: Alternative.of("h3", 443, ma=True),
+        lambda: Alternative.of("h3", 443, ma="60"),  # type: ignore[arg-type]
+        lambda: Alternative.of("h3", 443, persist=1),  # type: ignore[arg-type]
+        lambda: Alternative.of("h3", 443, host=None),  # type: ignore[arg-type]
+    ],
+)
+def test_of_refuses_wrong_types(call: object) -> None:
+    with pytest.raises(TypeError):
+        call()  # type: ignore[operator]

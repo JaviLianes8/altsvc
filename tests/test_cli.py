@@ -92,13 +92,18 @@ def test_a_head_on_stdin_combines_every_field_line_of_the_last_response(
     assert [a["max_age"] for a in report["alternatives"]] == [60, 86400]
 
 
-def test_a_421_response_is_flagged(
+def test_a_421_response_is_ignored(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    head = b'HTTP/1.1 421 Misdirected Request\nAlt-Svc: h3=":443"\n\n'
+    head = b'HTTP/1.1 421 Misdirected Request\nAlt-Svc: clear, h3=":443"\n\n'
     code, report, _ = _run(monkeypatch, capsys, [], head)
-    assert code == 0
-    assert [issue["code"] for issue in report["issues"]] == ["status.421"]
+    assert code == 1
+    assert report["ignored"] is True and report["clear"] is False
+    assert report["alternatives"] == []
+    assert [issue["code"] for issue in report["issues"]] == ["clear.mixed", "status.421"]
+    head = b'HTTP/2 200\nAlt-Svc: h3=":443"\n\n'
+    code, report, _ = _run(monkeypatch, capsys, [], head)
+    assert code == 0 and report["ignored"] is False
 
 
 def test_pasted_fields_without_a_status_line_and_a_bare_value_on_stdin(

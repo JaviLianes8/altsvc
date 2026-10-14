@@ -13,8 +13,12 @@ def expires_at(alternative: Alternative, received_at: float, *, age: int = 0) ->
     ``age`` the response's age in seconds (its ``Age`` field). The lifetime is ``ma``, or
     86400 seconds without it, counted from when the response was generated.
     """
-    if isinstance(age, bool) or not isinstance(age, int) or age < 0:
-        raise AltSvcError("age must be a non-negative int number of seconds", code="type")
+    if isinstance(age, bool) or not isinstance(age, int):
+        raise TypeError("age must be an int number of seconds")
+    if isinstance(received_at, bool) or not isinstance(received_at, (int, float)):
+        raise TypeError("received_at must be a number")
+    if age < 0:
+        raise AltSvcError("age must not be negative", code="age.negative")
     return received_at + max(0, alternative.max_age - age)
 
 

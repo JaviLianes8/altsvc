@@ -2,7 +2,9 @@
 
 The files are not part of the repository. Their tests skip until this script has fetched
 them; each download is checked against the size and sha256 in the manifest (taken after
-decoding, for sources served as base64).
+decoding, for sources served as base64). Entries marked "living" (an errata page, IANA
+registries) change over time: a new version is saved with a notice, and the tests that read
+it skip until the manifest is updated after a review.
 
     python scripts/fetch_upstream.py
 """
@@ -30,7 +32,10 @@ def main() -> int:
         digest = hashlib.sha256(body).hexdigest()
         if len(body) != entry["size"] or digest != entry["sha256"]:
             print(f"{name}: got {len(body)} bytes, sha256 {digest}; manifest differs")
-            failed += 1
+            if entry.get("living"):
+                (FOLDER / name).write_bytes(body)  # its tests skip until it is reviewed
+            else:
+                failed += 1
             continue
         (FOLDER / name).write_bytes(body)
         print(f"{name}: ok")

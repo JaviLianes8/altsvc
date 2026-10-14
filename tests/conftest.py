@@ -21,7 +21,10 @@ def read_upstream(name: str) -> str:
         pytest.skip(f"{name} is not fetched; run python scripts/fetch_upstream.py")
     entry = json.loads((UPSTREAM / "MANIFEST.json").read_text(encoding="utf-8"))[name]
     body = path.read_bytes()
-    assert hashlib.sha256(body).hexdigest() == entry["sha256"], f"{name} differs from MANIFEST"
+    if hashlib.sha256(body).hexdigest() != entry["sha256"]:
+        if entry.get("living"):
+            pytest.skip(f"{name} changed upstream; review it and update MANIFEST.json")
+        raise AssertionError(f"{name} differs from MANIFEST")
     return body.decode("utf-8")
 
 

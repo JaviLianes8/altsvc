@@ -11,12 +11,14 @@ Severity = Literal["error", "warning"]
 class AltSvcError(ValueError):
     """Raised when a field value cannot be read strictly or a value cannot be built.
 
-    ``code`` names the rule that failed (the same codes as :class:`Issue`) and ``offset``
-    is the index in the field value, or in the part being checked, where it failed.
+    ``code`` names the rule that failed (the same codes as :class:`Issue`), ``offset``
+    is the index in the field value, or in the part being checked, where it failed, and
+    ``message`` is the text without the offset.
     """
 
     def __init__(self, message: str, *, code: str = "invalid", offset: int | None = None) -> None:
         super().__init__(message if offset is None else f"{message} (at offset {offset})")
+        self.message = message
         self.code = code
         self.offset = offset
 

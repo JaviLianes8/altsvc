@@ -75,16 +75,20 @@ class Alternative:
         ``persist`` become parameters, and every part is checked as :func:`build` does.
         """
         if isinstance(port, bool) or not isinstance(port, int):
-            raise AltSvcError("port must be an int", code="type")
+            raise TypeError("port must be an int")
         extra = dict(params or {})
         if ma is not None:
             if isinstance(ma, bool) or not isinstance(ma, int):
-                raise AltSvcError("ma must be an int number of seconds", code="type")
+                raise TypeError("ma must be an int number of seconds")
             extra["ma"] = str(ma)
         if not isinstance(persist, bool):
-            raise AltSvcError("persist must be a bool", code="type")
+            raise TypeError("persist must be a bool")
         if persist:
             extra["persist"] = "1"
+        if not isinstance(host, str):
+            raise TypeError("host must be a str")
+        if host.startswith("[") and host.endswith("]"):
+            host = host[1:-1]
         made = cls(encode_protocol_id(alpn), join_authority(host, port), extra)
         from ._build import build  # the builder imports this module
 

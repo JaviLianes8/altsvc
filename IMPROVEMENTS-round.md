@@ -16,7 +16,7 @@ Progress:
 - [x] Docs and packaging: README, CHANGELOG, metadata, sdist contents
 - [x] Gates: ruff format, ruff check, mypy --strict, pytest
 - [x] Mutation run: removing guarded logic makes the suite fail
-- [ ] Independent review findings fixed with regression tests
+- [x] Independent review findings fixed with regression tests
 - [ ] Pull request opened, guard clean
 
 ## Starting point
@@ -119,3 +119,31 @@ Progress:
   frame and the Alt-Used request field: they belong to a client, not to a field codec.
 - Resolving SVCB or HTTPS records (RFC 9460); only the relation to Alt-Svc is documented.
 - Legacy Google QUIC parameters (`v`, `quic`) that quiche still reads.
+
+## Review fixes
+
+An independent review attacked the branch; each finding below is fixed with a test that
+fails on the code before the fix (`tests/test_review_fixes.py` and the updated tests):
+
+- An IPv6 literal with a zone ID let `build` write CR LF, a quote or non-ASCII text, because
+  the standard library accepts any text after `%`. IP literals now take hex digits, `:` and
+  `.` only, and `build` checks the whole authority is visible ASCII as a second guard.
+- Error messages carried an offset counted from the start of the part and strict reading
+  added a second one; `AltSvcError.message` now holds the bare text and issues use it.
+- `build` raised `AttributeError` for params that are not a mapping and could return an
+  empty string for a sequence that iterates differently from its length.
+- An invalid `ma` followed by a valid one dropped the alternative although the last value
+  wins; only the effective `ma` now decides.
+- `parse` and `lint` took any iterable (a set, a dict, an iterator); they take a `str` or a
+  sequence of `str`.
+- The head reader started a response at any line beginning with `HTTP/` and failed on a
+  BOM or an indented first line.
+- `clear` written as a list member (`clear,`) is an error, as the grammar has it.
+- A 421 response's field is reported as ignored, with no alternatives and exit status 1.
+- Wrong argument types raise `TypeError` everywhere; `Alternative.of` accepts a bracketed
+  IPv6 host; the `protocol.not-http` message no longer calls draft ids non-HTTP.
+- Docs: the build guarantee is stated as one way, the policy beyond RFC 3986 (port 0, empty
+  port, IPvFuture, zone IDs) is stated, the quiche whitespace difference is listed, the
+  CHANGELOG entry sits under one Unreleased heading and its claims match the code. Living
+  sources (the errata page and the IANA registries) no longer fail a refetch when they
+  change: the new copy is saved and the tests that read it skip until it is reviewed.

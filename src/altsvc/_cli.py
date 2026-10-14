@@ -43,8 +43,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         prog="altsvc",
         description="Check an Alt-Svc value, or the response head read from standard input "
         "(for example the output of curl -sI). Prints the alternatives and the findings as "
-        "JSON. Exit status 0 means the value follows RFC 7838, 1 that it has errors, 2 a "
-        "usage error such as input without the field.",
+        "JSON. Exit status 0 means the value follows RFC 7838 and a client may use it, 1 that "
+        "it has errors or comes in a 421 response, 2 a usage error such as input without "
+        "the field.",
     )
     parser.add_argument("value", nargs="?", help="an Alt-Svc field value")
     args = parser.parse_args(argv)
@@ -63,16 +64,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         return EXIT_USAGE
     analysis = analyse(fields)
     issues = list(analysis.issues)
-    if status == "421":
+    # RFC 7838 section 6: a client ignores the field of a 421 response altogether.
+    ignored = status == "421"
+    if ignored:
         message = "a 421 (Misdirected Request) response's Alt-Svc must be ignored"
-        issues.append(Issue("status.421", message, "warning"))
+        issues.append(Issue("status.421", message, "error"))
+    usable = [] if ignored else analysis.alternatives
     report: dict[str, object] = {
         "field": ", ".join(fields),
         "valid": not analysis.errors,
-        "clear": analysis.clear,
-        "alternatives": [_alternative(item) for item in analysis.alternatives],
+        "ignored": ignored,
+        "clear": analysis.clear and not ignored,
+        "alternatives": [_alternative(item) for item in usable],
         "issues": [_issue(issue) for issue in issues],
     }
     json.dump(report, sys.stdout, indent=2)
     sys.stdout.write("\n")
-    return 0 if not analysis.errors else EXIT_INVALID
+    return 0 if not analysis.errors and not ignored else EXIT_INVALID

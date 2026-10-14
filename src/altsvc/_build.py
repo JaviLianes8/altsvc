@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from ._chars import ascii_lower, is_ascii_digits, is_sendable, is_token, quote
 from ._codec import is_canonical_protocol_id, split_authority
@@ -25,9 +25,10 @@ def build(alternatives: Sequence[Alternative] | Clear) -> str:
         return "clear"
     if isinstance(alternatives, (str, bytes)) or not isinstance(alternatives, Sequence):
         raise TypeError("build takes CLEAR or a sequence of Alternative")
-    if not alternatives:
+    items = list(alternatives)
+    if not items:
         raise AltSvcError("an Alt-Svc value holds at least one alternative", code="empty")
-    return ", ".join(_alternative(alternative) for alternative in alternatives)
+    return ", ".join(_alternative(alternative) for alternative in items)
 
 
 def _plain(value: object, what: str) -> str:
@@ -48,6 +49,10 @@ def _alternative(alternative: Alternative) -> str:
         )
     authority = _plain(alternative.authority, "authority")
     split_authority(authority)
+    if not is_sendable(authority):  # a second guard: nothing but visible ASCII is quoted
+        raise AltSvcError(f"authority {authority!r} is not visible ASCII", code="authority.host")
+    if not isinstance(alternative.params, Mapping):
+        raise TypeError("params must be a mapping of str to str")
     parts = [f"{protocol}={quote(authority)}"]
     seen: set[str] = set()
     for raw_name, raw_value in alternative.params.items():

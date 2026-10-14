@@ -60,10 +60,12 @@ except AltSvcError as error:
 # ma.invalid 11
 ```
 
-Errors break the RFC 7838 grammar or one of its rules; warnings flag legal but likely
-mistaken values: a repeated parameter (the last one wins), `persist` with a value other
-than `1` (ignored, section 3.1), an `ma` above 2^31, and a protocol that is not one of
-the HTTP entries of the IANA ALPN registry.
+Errors break the RFC 7838 grammar or one of its rules, `clear` written as part of a list
+included. A few are library policy on top of the RFC: an empty port and port 0 (nothing
+can connect to them), and IP literals other than plain IPv6 (IPvFuture, zone IDs).
+Warnings flag legal but likely mistaken values: a repeated parameter (the last one wins,
+`ma` included), `persist` with a value other than `1` (ignored, section 3.1), an `ma`
+above 2^31, and a protocol that is not one of the HTTP entries of the IANA ALPN registry.
 
 ## Build a field value
 
@@ -86,6 +88,11 @@ value that would not read back: control characters and non-ASCII text (no header
 injection through CR LF), a protocol-id that is not in canonical form, a host that is not
 an ASCII reg-name or IP literal, a port outside 1 to 65535, an `ma` that is not digits up
 to 2^31, `persist` other than `1`, and parameter names that repeat up to case.
+
+The guarantee runs one way: whatever `build` writes reads back strictly to the same
+alternatives. Not every value that reads strictly can be built again, because `build` also
+refuses legal values that a sender has no reason to write, such as `persist=yes`, an `ma`
+above 2^31, non-ASCII text in a quoted value, or `ma` and `MA` side by side.
 
 ## Freshness
 
@@ -110,9 +117,10 @@ $ altsvc 'h3=":443"; ma=86400'
 ```
 
 Prints the alternatives and the findings as JSON. Exit status 0 means the value follows
-RFC 7838, 1 that it has errors, 2 a usage error such as input without the field. With
-`curl -sIL` the last response is checked, and a 421 response is flagged because
-section 6 says its `Alt-Svc` must be ignored.
+RFC 7838 and a client may use it, 1 that it has errors or comes in a 421 response, 2 a
+usage error such as input without the field. With `curl -sIL` the last response is
+checked. In a 421 response the report says `"ignored": true` and lists no alternatives,
+because section 6 says a client ignores that field.
 
 ## API
 
@@ -128,13 +136,15 @@ section 6 says its `Alt-Svc` must be ignored.
 | `expires_at(alt, received_at, *, age=0)` | When the alternative stops being fresh |
 | `is_fresh(alt, received_at, now, *, age=0)` | Whether it is still fresh at `now` |
 | `Issue` | One finding |
-| `AltSvcError` | A `ValueError` with `code` and `offset` |
+| `AltSvcError` | A `ValueError` with `code`, `offset` and `message` |
 | `DEFAULT_MAX_AGE`, `DELTA_SECONDS_MAX` | 86400 and 2147483648 |
 
 ## Where shipping parsers differ
 
-- quiche (Chromium) refuses the whole field on any error and requires a positive port;
-  this library keeps the sound alternatives unless you ask for `strict=True`.
+- quiche (Chromium) refuses the whole field on any error; this library keeps the sound
+  alternatives unless you ask for `strict=True`.
+- quiche skips whitespace around `=` in parameters; the grammar has none there, so
+  `ma = 60` is an error here and the tolerant reading drops that alternative.
 - curl matches `clear` without regard to case; RFC 7838 makes it case-sensitive, and so
   does this library.
 - RFC 7838 does not say whether parameter names are case-sensitive. curl and quiche

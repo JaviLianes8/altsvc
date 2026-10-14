@@ -60,7 +60,8 @@
     "licence": "IETF Trust Legal Provisions (https://trustee.ietf.org/license-info)",
     "fetched": "2026-10-14",
     "size": 18996,
-    "sha256": "01ffe9c2f049d99b687b2edb62c5df27f16b605e934bf2ccce07a593d533cb0b"
+    "sha256": "01ffe9c2f049d99b687b2edb62c5df27f16b605e934bf2ccce07a593d533cb0b",
+    "living": true
   },
   "alpn-protocol-ids.csv": {
     "title": "IANA TLS ALPN Protocol IDs registry",
@@ -69,7 +70,8 @@
     "licence": "IANA registry data, no licence stated; kept locally only",
     "fetched": "2026-10-14",
     "size": 5153,
-    "sha256": "4749b646ee88c3931edba66544e05898d808c6da3ab75ee3f0affbbb09834e99"
+    "sha256": "4749b646ee88c3931edba66544e05898d808c6da3ab75ee3f0affbbb09834e99",
+    "living": true
   },
   "http-alt-svc-parameters.xml": {
     "title": "IANA HTTP Alt-Svc Parameter Registry",
@@ -78,7 +80,8 @@
     "licence": "IANA registry data, no licence stated; kept locally only",
     "fetched": "2026-10-14",
     "size": 943,
-    "sha256": "cbfc802a46411cfc522054027d629a18881212c3928048662f22cc8679b31ab2"
+    "sha256": "cbfc802a46411cfc522054027d629a18881212c3928048662f22cc8679b31ab2",
+    "living": true
   },
   "quiche-spdy_alt_svc_wire_format.cc": {
     "title": "google/quiche spdy_alt_svc_wire_format.cc, the Alt-Svc parser used by Chromium",

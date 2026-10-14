@@ -4,9 +4,7 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-## [0.2.0] - not released yet
+## [0.2.0] - Unreleased
 
 ### Added
 
@@ -28,8 +26,14 @@ All notable changes to this project are documented here. The format follows
   drops the others; the README no longer says RFC 7838 asks for this.
 - `clear` next to alternatives now reads as `CLEAR`.
 - `ma` accepts ASCII digits only and reads values above 2147483648 as 2147483648; parameter
-  names are matched without case, and the last repeated parameter wins.
-- An authority needs a port from 1 to 65535 and an ASCII host or a bracketed IPv6 address.
+  names are matched without case, and the last repeated parameter wins (for `ma`, an
+  invalid value is still an error, but only an invalid last value drops the alternative).
+- Wrong argument types raise `TypeError`; `parse` and `lint` take a `str` or a sequence of
+  `str` only.
+- The command line reads a 421 response's field as ignored and exits 1.
+- An authority needs a port from 1 to 65535 (leading zeros allowed) and an ASCII reg-name
+  or IPv4 host, or a bracketed IPv6 address without a zone ID.
+- `clear` must be the whole value: next to alternatives or list commas it is an error.
 - `build` refuses control characters, non-ASCII text, non-canonical protocol-ids, invalid
   authorities, an invalid `ma` or `persist`, repeated parameter names and an empty list;
   it writes the characters of `str` subclasses, never their own rendering.

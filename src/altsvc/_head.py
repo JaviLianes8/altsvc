@@ -6,6 +6,7 @@ import re
 
 _FIELD = "alt-svc"
 _FIELD_LINE = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+:")
+_STATUS_LINE = re.compile(r"HTTP/\d(?:\.\d)? \d{3}(?: |$)")
 
 
 def _responses(lines: list[str]) -> list[list[str]]:
@@ -13,7 +14,7 @@ def _responses(lines: list[str]) -> list[list[str]]:
     heads: list[list[str]] = []
     current: list[str] | None = None
     for line in lines:
-        if line.startswith("HTTP/"):
+        if _STATUS_LINE.match(line):
             current = [line]
             heads.append(current)
         elif not line.strip(" \t"):
@@ -41,19 +42,22 @@ def field_lines(text: str) -> tuple[str, list[str]] | None:
     line (``name: value``); the status code is empty when there is no status line. With
     several responses (``curl -sIL`` follows redirects) the last one is used.
     """
+    text = text.removeprefix("\ufeff").removeprefix("\xef\xbb\xbf")  # a BOM, decoded or raw
     lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     while lines and not lines[0].strip(" \t"):
         lines.pop(0)
     if not lines:
         return None
-    if not lines[0].startswith("HTTP/"):
-        if not _FIELD_LINE.match(lines[0]):
-            return None
-        lines.insert(0, "HTTP/")  # pasted fields without a status line
-    status_line, *rest = _responses(lines)[-1]
+    lines[0] = lines[0].lstrip(" \t")
+    status = ""
+    if _STATUS_LINE.match(lines[0]):
+        status_line, *rest = _responses(lines)[-1]
+        status = status_line.split()[1]
+    elif _FIELD_LINE.match(lines[0]):
+        rest = _responses(["HTTP/1.1 000", *lines])[-1][1:]  # fields without a status line
+    else:
+        return None
     fields = _unfold(rest)
-    parts = status_line.split()
-    status = parts[1] if len(parts) > 1 else ""
     values: list[str] = []
     for line in fields:
         name, sep, value = line.partition(":")

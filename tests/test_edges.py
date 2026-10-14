@@ -41,9 +41,8 @@ def test_a_non_ascii_host_is_reported_as_needing_a_labels() -> None:
 
 
 def test_of_refuses_a_bool_port_as_a_type_error() -> None:
-    with pytest.raises(AltSvcError) as caught:
+    with pytest.raises(TypeError, match="port"):
         Alternative.of("h3", True)
-    assert caught.value.code == "type"
 
 
 def test_clear_mixed_points_at_the_second_element() -> None:
