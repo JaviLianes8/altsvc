@@ -34,3 +34,5 @@ __all__ = [
     "lint",
     "parse",
 ]
+
+del annotations

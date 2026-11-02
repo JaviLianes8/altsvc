@@ -27,6 +27,8 @@ All notable changes to this project are documented here. The format follows
   invalid times raise `AltSvcError` with code `time.invalid`, wrong types raise `TypeError`.
   Expiry is consistently returned as a float.
 - CLI processing of leading blank lines and folded fields takes linear time.
+- The incidental `annotations` module attribute is removed; `__all__` is the complete
+  supported public surface.
 
 ## [0.2.0] - 2026-10-20
 

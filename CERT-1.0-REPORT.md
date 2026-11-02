@@ -5,11 +5,11 @@ Progress:
 - [x] PyPI 0.2.0 identified; eleven pinned references fetched and verified
 - [x] Stable API review, safe diagnostics, executable examples and strict typing
 - [x] README, GUIDE, dated CHANGELOG and production metadata
-- [x] Initial gates: 274 passed, one opt-in wheel test skipped
-- [ ] Installed wheel, CLI, PyPI upgrade and distribution inspection
-- [ ] Every available supported interpreter
-- [ ] Mutation round of at least ten deliberate defects
-- [ ] Final four gates
+- [x] Final complete suite: 297 passed, no skips (wheel e2e enabled)
+- [x] Installed wheel, CLI, PyPI upgrade and distribution inspection
+- [x] Every available supported interpreter
+- [x] Mutation round of at least ten deliberate defects
+- [x] Final four gates
 - [ ] Independent reviewer (item 16, separate stage)
 - [ ] Five independent QA lenses (item 19, separate stage)
 - [ ] Merge and publication (item 17, separate stage)
@@ -47,7 +47,116 @@ standard-library urllib codec oracle runs all 256 octets and seeded random octet
 it is executed locally, not a remembered vector set. Generated and hostile vectors in
 the other tests are hand-written or seeded properties, not claimed as official fixtures.
 
-## Pending validation
+## Scorecard
 
-Installed distribution, interpreter and mutation results will be recorded here after
-execution. Independent reviews and QA lens verdicts have not been performed for 1.0.0.
+| Item | Result | Evidence |
+| --- | --- | --- |
+| 1 | PASS | Fourteen stable names and factory signatures pinned by API contracts; changes documented |
+| 2 | PASS | Exact public namespace and `__all__`; incidental `annotations` removed |
+| 3 | PASS | Module doctests, every public callable and property, README and GUIDE examples executed |
+| 4 | PASS | `mypy --strict src tests`, installed-wheel strict consumer, `py.typed` |
+| 5 | PASS | Typed errors, codes and offsets; generated diagnostics omit input; 100 KB secret tests |
+| 6 | PASS | 297 tests including every exported name, failure paths, CLI and metadata |
+| 7 | PASS | Eleven live downloads verified; RFC examples extracted; urllib codec oracle executed |
+| 8 | PASS | Actual PyPI 0.2.0 installed, common consumer run, upgrade in place, full consumer and CLI |
+| 9 | PASS | 15,768 seeded or exhaustive property trials plus six large input scaling shapes |
+| 10 | PASS | CPython 3.10 through 3.14, including free-threaded 3.14, installed wheel and sdist tests |
+| 11 | PASS | Absolute links, exact badge, problem and scoped alternatives comparison, strict twine check |
+| 12 | PASS | Requested dated 1.0.0 section, 2026-11-02; complete changes from published 0.2.0 |
+| 13 | PASS | 1.0.0, Production/Stable, Python 3.10+, MIT, four project URLs, no runtime dependencies |
+| 14 | PASS | Wheel and sdist contents inspected and asserted, LICENSE in both, no downloaded references |
+| 15 | PASS | Each of the four gates exits 0; full suite includes installed-wheel e2e |
+| 16 | PENDING | Independent reviewer is a separate stage |
+| 17 | PENDING | Merge and publication are separate stages |
+| 18 | PASS | Twenty isolated mutations, twenty detected failures, baseline and restored suite pass |
+| 19 | PENDING | Five independent QA lenses are a separate stage; no verdict claimed |
+
+## Packaging and end-to-end checks
+
+The wheel was installed into a fresh environment, first installing actual PyPI 0.2.0
+from https://pypi.org/pypi/altsvc/json (checked 2026-11-03; uploaded 2026-10-20).
+The common consumer program passed before and after upgrading in place to 1.0.0.
+The program imports from site-packages under isolated mode, exercises every function,
+and checks type information. Both the installed command and `python -m altsvc` were
+driven through subprocesses with response heads, invalid values and missing fields.
+A separate consumer passed `mypy --strict` against the installed wheel and executed.
+
+`twine check --strict` passed for both artifacts. The wheel contains only the package,
+type marker and distribution metadata including the entry point and MIT license.
+The sdist contains source, tests, source manifest, docs and development/build scripts.
+It contains no downloaded source text, bytecode, caches, version-control files or
+certification reports. A small build hook removes Hatchling's forced VCS-file inclusion.
+
+- `altsvc-1.0.0-py3-none-any.whl`: 20 entries, SHA-256 `efeba72c1a9508e2e378b41da721aea897793c002ea47bb5fa15a363f636b106`.
+- `altsvc-1.0.0.tar.gz`: 47 entries, SHA-256 `86e562ed81610203605abf7d8c3186e606017d1ab78688b0aac699714a9c8aca`.
+
+## Interpreter matrix
+
+The local installed interpreter was CPython 3.14.6. All other launcher registrations
+pointed to missing historical paths. Isolated CPython builds were therefore downloaded
+for every other supported minor version, plus free-threaded 3.14. The sdist was extracted,
+its `src` directory moved outside the test tree, and the wheel installed into each fresh
+environment. Tests ran with isolated Python and the pytest source-path setting cleared.
+The sole skip in each matrix run is the separate wheel-building e2e test, run above.
+
+| Interpreter | Result |
+| --- | --- |
+| CPython 3.14.6 | 296 passed, 1 skipped in 20.93s |
+| CPython 3.10.22 | 296 passed, 1 skipped in 23.79s |
+| CPython 3.11.18 | 296 passed, 1 skipped in 25.51s |
+| CPython 3.12.16 | 296 passed, 1 skipped in 17.86s |
+| CPython 3.13.18 | 296 passed, 1 skipped in 16.13s |
+| CPython 3.14.10t | 296 passed, 1 skipped in 13.63s |
+
+No supported minor version from 3.10 through 3.14 was left untested. Other Python
+implementations were not installed and are not separately advertised.
+
+## Robustness and mutation round
+
+The property suite includes 2,000 generated round trips, 3,000 hostile parser inputs,
+6,768 codec comparisons with urllib, and 4,000 independently evaluated duplicate
+parameter sequences. Blank lines, folded lines, long quoted values, many parameters,
+leading-zero ports and percent escapes scale at 10,000, 40,000 and 160,000 units.
+Large quoted serialization round trips and bounded diagnostic tests run in the suite.
+Tests use a 300-second per-test timeout; subprocesses also have finite timeouts.
+
+Each mutation below was applied alone to a scratch copy of the final library. The
+complete non-e2e suite ran with stop-on-first-failure. Every mutation produced a real
+test failure (exit 1); no collection error or timeout counted as a detection. The clean
+baseline and restored suite both passed 296 tests with only the opt-in e2e skipped.
+
+| # | Deliberate defect | Test that caught it |
+| --- | --- | --- |
+| 1 | default lifetime one second short (`_model.py`) | `tests/test_cert_contract.py::test_public_docstrings_are_executable` |
+| 2 | delta ceiling one second low (`_params.py`) | `tests/test_build_safety.py::test_build_accepts_the_largest_ma_and_leading_zeros` |
+| 3 | expiry includes boundary (`_cache.py`) | `tests/test_cert_contract.py::test_public_docstrings_are_executable` |
+| 4 | age added instead of subtracted (`_cache.py`) | `tests/test_cert_contract.py::test_public_docstrings_are_executable` |
+| 5 | nonfinite times accepted (`_cache.py`) | `tests/test_cert_contract.py::test_nonfinite_times_are_refused[nan]` |
+| 6 | duplicate spelling order lost (`_lint.py`) | `tests/test_cert_contract.py::test_exact_spelling_reinserted_after_other_case_variants` |
+| 7 | long port converts raw digits (`_codec.py`) | `tests/test_cert_contract.py::test_long_zero_prefixed_port_is_safe[]` |
+| 8 | protocol percent left bare (`_codec.py`) | `tests/test_cert_contract.py::test_public_docstrings_are_executable` |
+| 9 | decoder uses decimal (`_codec.py`) | `tests/test_cert_contract.py::test_public_docstrings_are_executable` |
+| 10 | maximum port rejected (`_codec.py`) | `tests/test_codec.py::test_split_authority[[2001:db8::1]:65535-2001:db8::1-65535]` |
+| 11 | empty build silently written (`_build.py`) | `tests/test_build.py::test_build_refuses_an_empty_sequence` |
+| 12 | builder allows duplicate names (`_build.py`) | `tests/test_build_safety.py::test_build_refuses[alternative10-parameter.duplicate]` |
+| 13 | builder accepts invalid persistence (`_build.py`) | `tests/test_build_safety.py::test_build_refuses[alternative9-persist.invalid]` |
+| 14 | strict parse ignores errors (`_parse.py`) | `tests/test_docs.py::test_every_readme_example_runs_and_prints_its_comment` |
+| 15 | clear no longer invalidates alternatives (`_parse.py`) | `tests/test_build.py::test_round_trip_clear` |
+| 16 | CLI accepts 421 response (`_cli.py`) | `tests/test_cli.py::test_a_421_response_is_ignored` |
+| 17 | CLI invalid status exits success (`_cli.py`) | `tests/test_cli.py::test_errors_exit_one_and_list_findings` |
+| 18 | quoted backslash not escaped (`_chars.py`) | `tests/test_build_safety.py::test_build_quotes_values_that_are_not_tokens` |
+| 19 | last parameter becomes first (`_params.py`) | `tests/test_cert_contract.py::test_exact_spelling_reinserted_after_other_case_variants` |
+| 20 | factory raises wrong exception (`_model.py`) | `tests/test_cert_contract.py::test_huge_factory_integers_have_typed_errors[port]` |
+
+## Final gates
+
+On CPython 3.14.6, each command exited 0: `ruff format --check .`, `ruff check .`,
+`mypy --strict src`, and `pytest`. The stronger `mypy --strict src tests` also passed
+(33 source files). Pytest with `ALTSVC_E2E=1` and the verified source downloads passed
+all 297 tests, no skips. Scratch paths were supplied for pytest temporary directories.
+
+## Remaining stages
+
+Independent reviewer and QA lenses a, b, c, d and e have not run for this release.
+No earlier verdict applies. The release branch is prepared for those stages; merging
+and publication remain pending.
