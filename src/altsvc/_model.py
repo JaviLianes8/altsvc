@@ -6,43 +6,26 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ._chars import ascii_lower, is_ascii_digits
 from ._codec import decode_protocol_id, encode_protocol_id, join_authority, split_authority
 from ._errors import AltSvcError
+from ._params import DELTA_SECONDS_MAX, find_param, read_delta_seconds
 
 # RFC 7838 section 3.1: without "ma" an alternative is fresh for 24 hours.
 DEFAULT_MAX_AGE = 86400
 
-# RFC 9111 section 1.2.2: a delta-seconds value too large to represent is read as 2^31.
-DELTA_SECONDS_MAX = 2147483648
-
 
 class Clear(Enum):
-    """The ``clear`` token, which invalidates every previously announced alternative."""
+    """The ``clear`` token, which invalidates every previously announced alternative.
+
+    >>> from altsvc import CLEAR, Clear
+    >>> Clear('clear') is CLEAR
+    True
+    """
 
     CLEAR = "clear"
 
 
 CLEAR = Clear.CLEAR
-
-
-def read_delta_seconds(text: str) -> int | None:
-    """ASCII ``1*DIGIT`` as an int capped at 2^31, or None; long strings are never converted."""
-    if not is_ascii_digits(text):
-        return None
-    digits = text.lstrip("0") or "0"
-    if len(digits) > len(str(DELTA_SECONDS_MAX)):
-        return DELTA_SECONDS_MAX
-    return min(int(digits), DELTA_SECONDS_MAX)
-
-
-def find_param(params: Mapping[str, str], name: str) -> str | None:
-    """The last value of a parameter, names compared with ASCII case folding."""
-    found = None
-    for key, value in params.items():
-        if ascii_lower(key) == name:
-            found = value
-    return found
 
 
 @dataclass
@@ -52,6 +35,10 @@ class Alternative:
     ``protocol`` is the protocol-id as written in the field (percent-encoded), ``authority``
     the content of the quoted alt-authority, ``[host]:port``. The properties read the
     parts; they raise :class:`AltSvcError` when the part they read is not valid.
+
+    >>> from altsvc import Alternative
+    >>> Alternative('h3', ':443').max_age
+    86400
     """
 
     protocol: str
@@ -73,13 +60,23 @@ class Alternative:
 
         The ALPN name is percent-encoded, an IPv6 host is put in brackets, ``ma`` and
         ``persist`` become parameters, and every part is checked as :func:`build` does.
+
+        >>> from altsvc import Alternative
+        >>> Alternative.of('h3', 443, ma=60)
+        Alternative(protocol='h3', authority=':443', params={'ma': '60'})
         """
         if isinstance(port, bool) or not isinstance(port, int):
             raise TypeError("port must be an int")
+        if not 1 <= port <= 65535:
+            raise AltSvcError("port must be 1 to 65535", code="authority.port")
+        if params is not None and not isinstance(params, Mapping):
+            raise TypeError("params must be a mapping of str to str")
         extra = dict(params or {})
         if ma is not None:
             if isinstance(ma, bool) or not isinstance(ma, int):
                 raise TypeError("ma must be an int number of seconds")
+            if not 0 <= ma <= DELTA_SECONDS_MAX:
+                raise AltSvcError("ma must be digits from 0 to 2147483648", code="ma.invalid")
             extra["ma"] = str(ma)
         if not isinstance(persist, bool):
             raise TypeError("persist must be a bool")
@@ -97,37 +94,67 @@ class Alternative:
 
     @property
     def alpn(self) -> bytes:
-        """The ALPN protocol name, with the percent-encoding of the protocol-id undone."""
+        """The ALPN protocol name, with the percent-encoding of the protocol-id undone.
+
+        >>> from altsvc import Alternative
+        >>> Alternative('h3', ':443').alpn
+        b'h3'
+        """
         return decode_protocol_id(self.protocol)
 
     @property
     def host(self) -> str:
-        """The alternative host, without IPv6 brackets; empty means the origin's host."""
+        """The alternative host, without IPv6 brackets; empty means the origin's host.
+
+        >>> from altsvc import Alternative
+        >>> Alternative('h3', '[::1]:443').host
+        '::1'
+        """
         return split_authority(self.authority)[0]
 
     @property
     def port(self) -> int:
-        """The alternative port."""
+        """The alternative port.
+
+        >>> from altsvc import Alternative
+        >>> Alternative('h3', ':443').port
+        443
+        """
         return split_authority(self.authority)[1]
 
     @property
     def ma(self) -> int | None:
-        """The ``ma`` parameter in seconds, capped at 2^31, or ``None`` when it is absent."""
+        """The ``ma`` parameter in seconds, capped at 2^31, or ``None`` when it is absent.
+
+        >>> from altsvc import Alternative
+        >>> Alternative('h3', ':443', {'ma': '60'}).ma
+        60
+        """
         value = find_param(self.params, "ma")
         if value is None:
             return None
         seconds = read_delta_seconds(value)
         if seconds is None:
-            raise AltSvcError(f"ma must be ASCII digits, got {value!r}", code="ma.invalid")
+            raise AltSvcError("ma must be ASCII digits", code="ma.invalid")
         return seconds
 
     @property
     def max_age(self) -> int:
-        """The freshness lifetime in seconds: ``ma``, or 86400 when it is absent."""
+        """The freshness lifetime in seconds: ``ma``, or 86400 when it is absent.
+
+        >>> from altsvc import Alternative
+        >>> Alternative('h3', ':443').max_age
+        86400
+        """
         ma = self.ma
         return DEFAULT_MAX_AGE if ma is None else ma
 
     @property
     def persist(self) -> bool:
-        """Whether ``persist=1`` asks clients to keep the alternative across network changes."""
+        """Whether ``persist=1`` asks clients to keep the alternative across network changes.
+
+        >>> from altsvc import Alternative
+        >>> Alternative('h3', ':443', {'persist': '1'}).persist
+        True
+        """
         return find_param(self.params, "persist") == "1"

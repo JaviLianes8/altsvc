@@ -1,5 +1,7 @@
 # altsvc
 
+[![Lianes8 Certified](https://lianes8studio.com/certified/lianes8-certified-badge.svg)](https://lianes8studio.com/certified)
+
 Parse, check and build the HTTP `Alt-Svc` header (RFC 7838), typed and zero-dependency.
 
 ## Install
@@ -161,10 +163,19 @@ connection attempts consistent with each. Resolving those records is out of scop
 ## Why
 
 Alt-Svc tells a client that a service is also reachable over another protocol or
-authority, most often to advertise HTTP/3. In Python the header is usually hand-rolled
-with a split on commas, which breaks on quoted strings and silently accepts what clients
-reject. This library is a small, typed, zero-dependency codec for that one header,
+authority, most often to advertise HTTP/3. Splitting on commas breaks on quoted strings
+and does not validate what clients accept. This library is a small, typed,
+zero-dependency codec for that one header,
 checked against the RFC text and two shipping parsers.
+
+curl and quiche integrate Alt-Svc handling into HTTP clients; this package exposes the
+header codec separately for Python tools. It does not connect, resolve DNS or authenticate
+origins. The comparisons above refer to the pinned source revisions listed in
+[the source manifest](https://github.com/JaviLianes8/altsvc/blob/main/tests/upstream/MANIFEST.json).
+
+See the [GUIDE](https://github.com/JaviLianes8/altsvc/blob/main/GUIDE.md) for error contracts,
+limits and upgrade notes, and the
+[CHANGELOG](https://github.com/JaviLianes8/altsvc/blob/main/CHANGELOG.md) for release changes.
 
 ## Development
 
@@ -175,7 +186,7 @@ against `tests/upstream/MANIFEST.json`. Without them those tests skip.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/JaviLianes8/altsvc/blob/main/LICENSE).
 
 ## Links
 

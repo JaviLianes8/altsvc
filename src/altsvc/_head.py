@@ -26,13 +26,13 @@ def _responses(lines: list[str]) -> list[list[str]]:
 
 def _unfold(lines: list[str]) -> list[str]:
     """Join obsolete folded lines (starting with SP or HTAB) onto the line before."""
-    out: list[str] = []
+    out: list[list[str]] = []
     for line in lines:
         if line[:1] in (" ", "\t") and out:
-            out[-1] += " " + line.strip(" \t")
+            out[-1].append(line.strip(" \t"))
         else:
-            out.append(line)
-    return out
+            out.append([line])
+    return [" ".join(parts) for parts in out]
 
 
 def field_lines(text: str) -> tuple[str, list[str]] | None:
@@ -44,8 +44,10 @@ def field_lines(text: str) -> tuple[str, list[str]] | None:
     """
     text = text.removeprefix("\ufeff").removeprefix("\xef\xbb\xbf")  # a BOM, decoded or raw
     lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
-    while lines and not lines[0].strip(" \t"):
-        lines.pop(0)
+    start = 0
+    while start < len(lines) and not lines[start].strip(" \t"):
+        start += 1
+    lines = lines[start:]
     if not lines:
         return None
     lines[0] = lines[0].lstrip(" \t")

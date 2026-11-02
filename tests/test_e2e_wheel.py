@@ -64,13 +64,14 @@ def _run(
     *cmd: str | Path, cwd: Path | None = None, stdin: bytes = b""
 ) -> subprocess.CompletedProcess[bytes]:
     return subprocess.run(
-        [str(c) for c in cmd], cwd=cwd, input=stdin, capture_output=True, check=False
+        [str(c) for c in cmd], cwd=cwd, input=stdin, capture_output=True, check=False, timeout=180
     )
 
 
 def _check_artifacts(wheel: Path, sdist: Path) -> None:
     names = zipfile.ZipFile(wheel).namelist()
     assert "altsvc/py.typed" in names and "altsvc/__main__.py" in names
+    assert any(name.endswith("licenses/LICENSE") for name in names)
     assert not any(name.startswith(("tests/", "scripts/")) for name in names)
     entry_points = next(name for name in names if name.endswith("entry_points.txt"))
     text = zipfile.ZipFile(wheel).read(entry_points).decode()
@@ -79,6 +80,8 @@ def _check_artifacts(wheel: Path, sdist: Path) -> None:
         listing = [name.split("/", 1)[1] for name in archive.getnames() if "/" in name]
     assert not any(name.startswith("IMPROVEMENTS-round") for name in listing)
     assert not any(name.startswith(".github") for name in listing)
+    assert "LICENSE" in listing and "GUIDE.md" in listing
+    assert not any(name.startswith(("CERT-", ".git")) for name in listing)
     upstream = [name for name in listing if name.startswith("tests/upstream/")]
     assert upstream == ["tests/upstream/MANIFEST.json"], upstream
     assert "tests/test_sources.py" in listing and "scripts/fetch_upstream.py" in listing
@@ -96,6 +99,14 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
     venv.create(env_dir, with_pip=True)
     bindir = env_dir / ("Scripts" if sys.platform == "win32" else "bin")
     python = bindir / "python"
+
+    # Confirm the actual published release works before replacing it in place.
+    previous = _run(python, "-m", "pip", "install", "-q", "altsvc==0.2.0")
+    assert previous.returncode == 0, previous.stderr
+    old = _run(
+        python, "-I", "-c", "import altsvc; assert altsvc.__version__ == '0.2.0'; " + PROGRAM
+    )
+    assert old.returncode == 0, old.stderr
     installed = _run(python, "-m", "pip", "install", "-q", wheel)
     assert installed.returncode == 0, installed.stderr
 
@@ -105,6 +116,8 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
     result = _run(python, "-I", "-c", PROGRAM, cwd=work)
     assert result.returncode == 0, result.stderr
     assert result.stdout.decode().strip() == "e2e ok"
+    version = _run(python, "-I", "-c", "import altsvc; assert altsvc.__version__ == '1.0.0'")
+    assert version.returncode == 0, version.stderr
 
     head = b'HTTP/2 200\r\nalt-svc: h3=":443"; ma=86400, h3-29=":443"\r\n\r\n'
     script = bindir / ("altsvc.exe" if sys.platform == "win32" else "altsvc")

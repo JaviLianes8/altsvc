@@ -75,7 +75,7 @@ def _quoted(text: str, index: int) -> tuple[str, int]:
             out.append(char)
             position += 1
         else:
-            raise _Syntax("syntax.quoted-string", f"{char!r} is not allowed here", position)
+            raise _Syntax("syntax.quoted-string", "character is not allowed here", position)
     raise _Syntax("syntax.quoted-string", "the quoted string is not closed", index)
 
 

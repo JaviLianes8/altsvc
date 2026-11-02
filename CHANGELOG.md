@@ -4,7 +4,31 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - Unreleased
+## [1.0.0] - 2026-11-02
+
+### Stable
+
+- The fourteen exported names, signatures and defaults, the mutable `Alternative`
+  model, typed findings, strict and tolerant parsing, safe serialization, protocol-id
+  codecs, freshness helpers and JSON command line are the supported API.
+- Runnable docstrings, a detailed guide, installed-wheel upgrade coverage, seeded
+  properties, source-derived examples and mutation-tested contracts.
+
+### Changed
+
+- Library-generated errors and lint findings no longer quote input values or type names.
+  Codes and offsets remain available; diagnostic wording is not a stable contract.
+- Repeated parameter spellings now preserve wire order: `ma=1; MA=2; ma=3` reads as 3.
+- Ports with thousands of leading zeros read without triggering Python's integer limit.
+- `Alternative.of` rejects out-of-range integers before converting them to text and
+  rejects non-mapping `params`, including empty lists.
+- Encoding lone surrogates raises `AltSvcError` with code `protocol-id.unicode`.
+- Freshness helpers require an `Alternative` and finite numeric times (booleans refused);
+  invalid times raise `AltSvcError` with code `time.invalid`, wrong types raise `TypeError`.
+  Expiry is consistently returned as a float.
+- CLI processing of leading blank lines and folded fields takes linear time.
+
+## [0.2.0] - 2026-10-20
 
 ### Added
 

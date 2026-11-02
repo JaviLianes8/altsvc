@@ -42,11 +42,11 @@ def test_an_ipv4_mapped_ipv6_literal_is_fine() -> None:
 def test_messages_carry_no_offset_of_their_own() -> None:
     (issue,) = lint(['h3=":443"', 'h2=":0"'])
     assert issue.offset == 14
-    assert issue.message == "port must be 1 to 65535 in ':0'"
+    assert issue.message == "port must be 1 to 65535"
     with pytest.raises(AltSvcError) as caught:
         parse('h3=":0"', strict=True)
-    assert str(caught.value) == "port must be 1 to 65535 in ':0' (at offset 3)"
-    assert caught.value.message == "port must be 1 to 65535 in ':0'"
+    assert str(caught.value) == "port must be 1 to 65535 (at offset 3)"
+    assert caught.value.message == "port must be 1 to 65535"
 
 
 def test_build_wants_a_mapping_of_params() -> None:
@@ -102,7 +102,7 @@ def test_clear_is_a_whole_value_not_a_list_member(value: str | list[str]) -> Non
 
 def test_an_unregistered_draft_id_is_not_called_non_http() -> None:
     (issue,) = lint('h3-29=":443"')
-    assert issue.message == "'h3-29' is not a registered HTTP ALPN id (IANA ALPN registry)"
+    assert issue.message == "protocol-id is not a registered HTTP ALPN id (IANA ALPN registry)"
 
 
 def test_of_accepts_a_bracketed_ipv6_host() -> None:
