@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, ItemsView, Mapping
 from types import MappingProxyType
 from typing import cast
 
@@ -11,6 +11,37 @@ import altsvc
 from altsvc import DEFAULT_MAX_AGE, Alternative, AltSvcError, expires_at, is_fresh
 
 assert "site-packages" in altsvc.__file__, altsvc.__file__
+
+
+class ItemsOnly:
+    def items(self) -> ItemsView[str, str]:
+        return {"ma": "1", "persist": "1"}.items()
+
+
+items_only = ItemsOnly()
+assert not isinstance(items_only, Mapping)
+for accessor in ("ma", "max_age", "persist"):
+    item = Alternative("h3", ":443", cast(dict[str, str], items_only))
+    try:
+        getattr(item, accessor)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError(f"{accessor} must reject items-only non-mappings")
+
+for padding in (" {}", "{} ", " {} ", "\t{}", "{}\t", "\t{} \t"):
+    padded_ma = padding.format("ma")
+    padded_persist = padding.format("persist")
+    item = Alternative("h3", ":443", {padded_ma: "1", padded_persist: "1"})
+    assert item.ma is None
+    assert item.max_age == DEFAULT_MAX_AGE
+    assert item.persist is False
+    item = Alternative(
+        "h3", ":443", {"ma": "7", "persist": "0", padded_ma: "1", padded_persist: "1"}
+    )
+    assert item.ma == 7
+    assert item.max_age == 7
+    assert item.persist is False
 
 mapping_factories: tuple[Callable[[dict[str, str]], Mapping[str, str]], ...] = (
     UserDict,

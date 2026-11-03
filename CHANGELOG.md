@@ -16,6 +16,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Source and installed-wheel contracts now keep whitespace-padded parameter names
+  unmatched and reject items-only non-mappings through `ma`, `max_age` and `persist`.
+  Existing library behavior and the public API are unchanged.
 - Source and installed-wheel contracts now accept non-dict parameter mappings and
   reject whitespace-padded persistence and lifetime values. Existing library behavior
   and the public API are unchanged.

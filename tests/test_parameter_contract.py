@@ -3,13 +3,46 @@
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, ItemsView, Mapping
 from types import MappingProxyType
 from typing import cast
 
 import pytest
 
 from altsvc import DEFAULT_MAX_AGE, Alternative, AltSvcError, expires_at, is_fresh
+
+
+class ItemsOnly:
+    def items(self) -> ItemsView[str, str]:
+        return {"ma": "1", "persist": "1"}.items()
+
+
+@pytest.mark.parametrize("accessor", ["ma", "max_age", "persist"])
+def test_parameter_accessors_reject_items_only_non_mappings(accessor: str) -> None:
+    params = ItemsOnly()
+    assert not isinstance(params, Mapping)
+    item = Alternative("h3", ":443", cast(dict[str, str], params))
+    with pytest.raises(TypeError):
+        getattr(item, accessor)
+
+
+@pytest.mark.parametrize("padding", [" {}", "{} ", " {} ", "\t{}", "{}\t", "\t{} \t"])
+@pytest.mark.parametrize(
+    ("name", "accessor", "missing", "existing"),
+    [
+        ("ma", "ma", None, 7),
+        ("ma", "max_age", DEFAULT_MAX_AGE, 7),
+        ("persist", "persist", False, False),
+    ],
+)
+def test_whitespace_padded_parameter_names_remain_unmatched(
+    padding: str, name: str, accessor: str, missing: object, existing: object
+) -> None:
+    padded = padding.format(name)
+    item = Alternative("h3", ":443", {padded: "1"})
+    assert getattr(item, accessor) == missing
+    item = Alternative("h3", ":443", {"ma": "7", "persist": "0", padded: "1"})
+    assert getattr(item, accessor) == existing
 
 
 @pytest.mark.parametrize("mapping", [UserDict, MappingProxyType])
