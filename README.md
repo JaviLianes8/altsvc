@@ -1,5 +1,7 @@
 # altsvc
 
+[![Lianes8 Certified](https://lianes8studio.com/certified/lianes8-certified-badge.svg)](https://lianes8studio.com/certified)
+
 Parse, check and build the HTTP `Alt-Svc` header (RFC 7838), typed and zero-dependency.
 
 ## Install
@@ -84,15 +86,16 @@ print(parse(build([alt]), strict=True) == [alt])
 ```
 
 `build` checks every part before writing it and raises `AltSvcError` rather than write a
-value that would not read back: control characters and non-ASCII text (no header
-injection through CR LF), a protocol-id that is not in canonical form, a host that is not
-an ASCII reg-name or IP literal, a port outside 1 to 65535, an `ma` that is not digits up
-to 2^31, `persist` other than `1`, and parameter names that repeat up to case.
+value that would not read back: control characters except horizontal tab and non-ASCII
+text (no header injection through CR LF), a protocol-id that is not in canonical form,
+a host that is not an ASCII reg-name or IP literal, a port outside 1 to 65535, an `ma`
+that is not digits up to 2^31, `persist` other than `1`, and parameter names that repeat up to case.
 
 The guarantee runs one way: whatever `build` writes reads back strictly to the same
 alternatives. Not every value that reads strictly can be built again, because `build` also
-refuses legal values that a sender has no reason to write, such as `persist=yes`, an `ma`
-above 2^31, non-ASCII text in a quoted value, or `ma` and `MA` side by side.
+refuses legal values that a sender has no reason to write, such as an `ma` above 2^31,
+non-ASCII text in a quoted value, or `ma` and `MA` side by side. Parsing discards ignored
+`persist` values, so they cannot cancel an earlier `persist=1`.
 
 ## Freshness
 
@@ -161,10 +164,19 @@ connection attempts consistent with each. Resolving those records is out of scop
 ## Why
 
 Alt-Svc tells a client that a service is also reachable over another protocol or
-authority, most often to advertise HTTP/3. In Python the header is usually hand-rolled
-with a split on commas, which breaks on quoted strings and silently accepts what clients
-reject. This library is a small, typed, zero-dependency codec for that one header,
+authority, most often to advertise HTTP/3. Splitting on commas breaks on quoted strings
+and does not validate what clients accept. This library is a small, typed,
+zero-dependency codec for that one header,
 checked against the RFC text and two shipping parsers.
+
+curl and quiche integrate Alt-Svc handling into HTTP clients; this package exposes the
+header codec separately for Python tools. It does not connect, resolve DNS or authenticate
+origins. The comparisons above refer to the pinned source revisions listed in
+[the source manifest](https://github.com/JaviLianes8/altsvc/blob/main/tests/upstream/MANIFEST.json).
+
+See the [GUIDE](https://github.com/JaviLianes8/altsvc/blob/main/GUIDE.md) for error contracts,
+limits and upgrade notes, and the
+[CHANGELOG](https://github.com/JaviLianes8/altsvc/blob/main/CHANGELOG.md) for release changes.
 
 ## Development
 
@@ -175,7 +187,7 @@ against `tests/upstream/MANIFEST.json`. Without them those tests skip.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/JaviLianes8/altsvc/blob/main/LICENSE).
 
 ## Links
 

@@ -23,11 +23,18 @@ def encode_protocol_id(name: str | bytes) -> str:
 
     Octets that are token characters stay as they are, every other octet and ``%`` are
     written as ``%XX`` with upper-case hex digits. A ``str`` is taken as UTF-8.
+
+    >>> from altsvc import encode_protocol_id
+    >>> encode_protocol_id('x%y')
+    'x%25y'
     """
     if isinstance(name, str):
-        name = name.encode("utf-8")
+        try:
+            name = name.encode("utf-8")
+        except UnicodeEncodeError:
+            raise AltSvcError("ALPN text must be valid UTF-8", code="protocol-id.unicode") from None
     elif not isinstance(name, bytes):
-        raise TypeError(f"an ALPN name is str or bytes, not {type(name).__name__}")
+        raise TypeError("an ALPN name is str or bytes")
     if not name:
         raise AltSvcError("an ALPN protocol name is never empty", code="protocol-id.empty")
     return "".join(chr(octet) if octet in _BARE else f"%{octet:02X}" for octet in name)
@@ -36,13 +43,17 @@ def encode_protocol_id(name: str | bytes) -> str:
 def decode_protocol_id(protocol_id: str) -> bytes:
     """Return the ALPN protocol name, as octets, that a protocol-id stands for.
 
-    Lower-case hex digits are decoded too; :func:`is_canonical_protocol_id` tells whether
-    the form is the single one RFC 7838 allows a sender to write.
+    Lower-case hex digits are decoded too; encoding the result gives the canonical
+    form RFC 7838 allows a sender to write. Malformed input raises ``AltSvcError``.
+
+    >>> from altsvc import decode_protocol_id
+    >>> decode_protocol_id('x%25y')
+    b'x%y'
     """
     if not isinstance(protocol_id, str):
-        raise TypeError(f"a protocol-id is str, not {type(protocol_id).__name__}")
+        raise TypeError("a protocol-id is str")
     if not protocol_id or any(char not in TCHAR for char in protocol_id):
-        raise AltSvcError(f"protocol-id is not a token: {protocol_id!r}", code="protocol-id.token")
+        raise AltSvcError("protocol-id is not a token", code="protocol-id.token")
     out = bytearray()
     index = 0
     while index < len(protocol_id):
@@ -54,7 +65,7 @@ def decode_protocol_id(protocol_id: str) -> bytes:
         pair = protocol_id[index + 1 : index + 3]
         if len(pair) != 2 or not set(pair) <= HEXDIG:
             raise AltSvcError(
-                f"'%' must start a %XX escape in {protocol_id!r}",
+                "'%' must start a %XX escape",
                 code="protocol-id.percent",
                 offset=index,
             )
@@ -80,14 +91,17 @@ def split_authority(authority: str) -> tuple[str, int]:
     65535. Library policy beyond RFC 3986: an empty port and port 0 cannot be connected
     to, and IPvFuture literals and zone IDs are refused.
     """
+    if not isinstance(authority, str):
+        raise TypeError("authority must be a str")
+    authority = str.__str__(authority)
     host, colon, port = authority.rpartition(":")
     if not colon:
-        raise AltSvcError(f"no ':port' in alt-authority {authority!r}", code="authority.port")
+        raise AltSvcError("no ':port' in alt-authority", code="authority.port")
     # Leading zeros are allowed (port = *DIGIT); long digit strings are never converted.
     digits = port.lstrip("0")
     if not (set(port) <= DIGITS and 0 < len(digits) <= 5 and int(digits) <= MAX_PORT):
         raise AltSvcError(
-            f"port must be 1 to {MAX_PORT} in {authority!r}",
+            f"port must be 1 to {MAX_PORT}",
             code="authority.port",
             offset=len(host),
         )
@@ -98,15 +112,13 @@ def split_authority(authority: str) -> tuple[str, int]:
                 raise ValueError
             ipaddress.IPv6Address(host[1:-1])
         except ValueError:
-            raise AltSvcError(f"bad IPv6 literal {host!r}", code="authority.host") from None
-        return host[1:-1], int(port)
+            raise AltSvcError("bad IPv6 literal", code="authority.host") from None
+        return host[1:-1], int(digits)
     if not host.isascii():
-        raise AltSvcError(
-            f"host {host!r} must be written in A-labels (ASCII)", code="authority.host"
-        )
+        raise AltSvcError("host must be written in A-labels (ASCII)", code="authority.host")
     if not set(host) <= REG_NAME or not _percent_ok(host):
-        raise AltSvcError(f"host {host!r} is not a valid reg-name", code="authority.host")
-    return host, int(port)
+        raise AltSvcError("host is not a valid reg-name", code="authority.host")
+    return host, int(digits)
 
 
 def join_authority(host: str, port: int) -> str:

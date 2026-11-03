@@ -8,7 +8,8 @@ from dataclasses import dataclass, field
 from ._chars import ascii_lower
 from ._codec import HTTP_ALPN_IDS, decode_protocol_id, is_canonical_protocol_id, split_authority
 from ._errors import AltSvcError, Issue
-from ._model import DELTA_SECONDS_MAX, Alternative, read_delta_seconds
+from ._model import Alternative
+from ._params import DELTA_SECONDS_MAX, read_delta_seconds
 from ._scan import Entry, scan
 
 
@@ -48,11 +49,11 @@ def _protocol(entry: Entry, issues: list[Issue]) -> None:
         entry.usable = False
         return
     if not is_canonical_protocol_id(entry.protocol):
-        message = f"{entry.protocol!r} is not the canonical protocol-id (upper-case %XX only)"
+        message = "protocol-id is not canonical (upper-case %XX only)"
         issues.append(Issue("protocol-id.canonical", message, "error", entry.offset))
         entry.usable = False
     elif name not in HTTP_ALPN_IDS:
-        message = f"{entry.protocol!r} is not a registered HTTP ALPN id (IANA ALPN registry)"
+        message = "protocol-id is not a registered HTTP ALPN id (IANA ALPN registry)"
         issues.append(Issue("protocol.not-http", message, "warning", entry.offset))
 
 
@@ -71,21 +72,24 @@ def _params(entry: Entry, issues: list[Issue]) -> dict[str, str]:
     for name, value, offset in entry.params:
         key = ascii_lower(name)
         if key in seen:
-            message = f"parameter {name!r} repeats; the last value is used"
+            message = "parameter name repeats; the last non-ignored value is used"
             issues.append(Issue("parameter.duplicate", message, "warning", offset))
         seen.add(key)
         if key == "ma":
             seconds = read_delta_seconds(value)
             last_ma_ok = seconds is not None
             if seconds is None:
-                message = f"ma must be ASCII digits (delta-seconds), got {value!r}"
+                message = "ma must be ASCII digits (delta-seconds)"
                 issues.append(Issue("ma.invalid", message, "error", offset))
             elif seconds == DELTA_SECONDS_MAX and value.lstrip("0") != str(DELTA_SECONDS_MAX):
                 message = f"ma is above {DELTA_SECONDS_MAX} and is read as that"
                 issues.append(Issue("ma.capped", message, "warning", offset))
         elif key == "persist" and value != "1":
-            message = f"persist={value!r} is ignored; only persist=1 has a meaning"
+            message = "persist value is ignored; only persist=1 has a meaning"
             issues.append(Issue("persist.ignored", message, "warning", offset))
+            continue
+        # Re-inserting preserves wire order even when an exact spelling repeats.
+        params.pop(name, None)
         params[name] = value
     if not last_ma_ok:
         entry.usable = False
@@ -118,5 +122,10 @@ def analyse(value: str | Sequence[str]) -> Analysis:
 
 
 def lint(value: str | Sequence[str]) -> list[Issue]:
-    """Every finding about an Alt-Svc field value, in the order they occur."""
+    """Every finding about an Alt-Svc field value, in the order they occur.
+
+    >>> from altsvc import lint
+    >>> lint('h3=":443"')
+    []
+    """
     return analyse(value).issues

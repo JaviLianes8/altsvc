@@ -14,6 +14,10 @@ class AltSvcError(ValueError):
     ``code`` names the rule that failed (the same codes as :class:`Issue`), ``offset``
     is the index in the field value, or in the part being checked, where it failed, and
     ``message`` is the text without the offset.
+
+    >>> from altsvc import AltSvcError
+    >>> str(AltSvcError('invalid value', code='invalid', offset=2))
+    'invalid value (at offset 2)'
     """
 
     def __init__(self, message: str, *, code: str = "invalid", offset: int | None = None) -> None:
@@ -27,8 +31,13 @@ class AltSvcError(ValueError):
 class Issue:
     """One finding about an Alt-Svc field value.
 
-    An ``error`` breaks RFC 7838 (its grammar or one of its MUSTs); a ``warning`` marks
-    something legal that is likely a mistake.
+    An ``error`` breaks RFC 7838 (its grammar or one of its MUSTs) or the additional
+    library policy documented in the guide; a ``warning`` marks something legal that
+    is likely a mistake. Findings are frozen and have no writable instance dictionary.
+
+    >>> from altsvc import Issue
+    >>> Issue('empty', 'empty value', 'error', 0).severity
+    'error'
     """
 
     code: str
