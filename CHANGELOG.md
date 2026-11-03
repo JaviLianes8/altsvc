@@ -16,6 +16,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Source and installed-wheel contracts now accept non-dict parameter mappings and
+  reject whitespace-padded persistence and lifetime values. Existing library behavior
+  and the public API are unchanged.
 - Source and installed-wheel contracts now require ASCII-only parameter matching and
   `ma.invalid` for explicitly empty lifetimes, including freshness helpers. Missing
   lifetimes retain the default; existing library behavior is unchanged.

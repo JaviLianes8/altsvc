@@ -1,12 +1,59 @@
-"""Hand-written contracts for ASCII parameter names and explicit empty lifetimes."""
+"""Hand-written contracts for parameter mappings, names and exact stored values."""
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections import UserDict
+from collections.abc import Callable, Mapping
+from types import MappingProxyType
+from typing import cast
 
 import pytest
 
 from altsvc import DEFAULT_MAX_AGE, Alternative, AltSvcError, expires_at, is_fresh
+
+
+@pytest.mark.parametrize("mapping", [UserDict, MappingProxyType])
+@pytest.mark.parametrize(
+    ("read", "expected"),
+    [
+        pytest.param(lambda item: item.ma, 1, id="ma"),
+        pytest.param(lambda item: item.max_age, 1, id="max_age"),
+        pytest.param(lambda item: item.persist, True, id="persist"),
+    ],
+)
+def test_parameter_accessors_accept_non_dict_mappings(
+    mapping: Callable[[dict[str, str]], Mapping[str, str]],
+    read: Callable[[Alternative], object],
+    expected: object,
+) -> None:
+    params = mapping({"ma": "1", "persist": "1"})
+    # The unvalidated constructor's runtime mapping contract is broader than its annotation.
+    item = Alternative("h3", ":443", cast(dict[str, str], params))
+    assert read(item) == expected
+
+
+@pytest.mark.parametrize("value", [" 1", "1 ", " 1 ", "\t1", "1\t", "\t1 \t"])
+def test_whitespace_padded_persistence_is_false(value: str) -> None:
+    assert Alternative("h3", ":443", {"persist": value}).persist is False
+
+
+@pytest.mark.parametrize("value", [" 1", "1 ", " 1 ", "\t1", "1\t", "\t1 \t"])
+@pytest.mark.parametrize(
+    "read",
+    [
+        pytest.param(lambda item: item.ma, id="ma"),
+        pytest.param(lambda item: item.max_age, id="max_age"),
+        pytest.param(lambda item: expires_at(item, 100), id="expires_at"),
+        pytest.param(lambda item: is_fresh(item, 100, 100), id="is_fresh"),
+    ],
+)
+def test_whitespace_padded_lifetime_is_invalid(
+    value: str, read: Callable[[Alternative], object]
+) -> None:
+    item = Alternative("h3", ":443", {"ma": value})
+    with pytest.raises(AltSvcError) as caught:
+        read(item)
+    assert caught.value.code == "ma.invalid"
 
 
 @pytest.mark.parametrize(
