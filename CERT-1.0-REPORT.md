@@ -194,6 +194,43 @@ Evidence and temporary paths, relative to this checkout: `../../scratch/altsvc-c
 Logs: `red.log`, `original-verified.log`, `M37-verified.log`, `M49-verified.log`,
 `final.log`, `report-gates.log`. Behavior changes are recorded in CHANGELOG.md.
 
+## QA round 2
+
+Date: 2026-11-03. Reviewed base: `4b49011ebc9d01b2bda27caf16d70dc317ee4f98`.
+Fix commit: `b5ab5010571fefe413adbf896bd5e68f0fa0a87a`. Both reported findings
+addressed; none disputed. Earlier scorecards, artifact hashes and interpreter results
+describe their respective preparation rounds.
+
+| Finding | Change and verification |
+| --- | --- |
+| C-04 | Normalize accepted authority strings and parameter keys and values with base-string conversion before accessor operations. Ten hand-written cases check destinations, lifetime boundaries, freshness, parameter matching and persistence against strict serialization round trips. Raw constructor values remain unchanged. |
+| E-03 | Add source and installed-wheel CLI contracts for a 421 response containing a valid alternative. Assert exit 1, `ignored=true`, a `status.421` issue and `alternatives=[]`; the wheel contract exercises both installed launchers. Existing CLI suppression remains unchanged. |
+
+Before the accessor fix, the new contracts produced nine accessor failures; the
+uppercase-key control and eleven CLI cases passed. After the fix, all 21 targeted
+cases passed. The behavior correction and the added CLI coverage are in CHANGELOG.md.
+
+N02 was applied only to a scratch source copy, replacing `ignored or analysis.clear`
+with `analysis.clear`. Each run below exited 1 at the empty-alternatives assertion;
+neither a collection error nor a build failure counted as a detection.
+
+| Mutation | Detecting contract | Result |
+| --- | --- | --- |
+| N02, source | `tests/test_cli_contract.py::test_421_suppresses_effective_alternatives` | One test failed on the exposed h3 alternative |
+| N02, installed wheel | `tests/test_e2e_wheel.py::test_installed_wheel_end_to_end` | Wheel built and installed; the 421 output assertion failed |
+
+All four gates exited 0: `ruff format --check .`, `ruff check .`, `mypy --strict src`,
+and `pytest`. The stronger `mypy --strict src tests` also passed (37 files).
+CPython 3.14.6 passed **417 tests, no skips**, with `ALTSVC_E2E=1`, verified upstream
+fixtures and a 300-second per-test timeout. The wheel test built both distributions,
+upgraded the installed 0.2.0 release and exercised both CLI launchers. The interpreter
+matrix was not repeated in this bounded fix round.
+
+Evidence paths relative to this checkout: `../../scratch/altsvc-cert/fix-r2/`.
+Logs: `red.log`, `green.log`, `n02-source.log`, `n02-wheel.log`, `full-gates.log`.
+The mutation driver and mutated copy remain in that scratch directory; no mutation
+was applied to the repository.
+
 ## Remaining stages
 
 Confirmation by the same five QA lenses remains pending, as do the independent
