@@ -14,9 +14,10 @@ Progress:
 - [x] QA round 3: E-04 and E-05 contracts added; both mutants detected; 437 tests passed
 - [x] QA round 4: E-06 and E-07 contracts added; both mutants detected; 473 tests passed
 - [x] QA round 5: E-R5-01 and E-R5-02 contracts added; both mutants detected; 494 tests passed
-- [ ] Independent reviewer (item 16, separate stage)
-- [ ] Five independent QA lenses (item 19, separate stage)
-- [ ] Merge and publication (item 17, separate stage)
+- [x] Independent reviewer (item 16): PASS in round 1, no findings
+- [x] Five independent QA lenses (item 19): all five PASS
+- [x] PR #3 from `release/1.0.0` to `main`, trace guard CLEAN, final gates on a fresh clone
+- [ ] Merge and publication (maintainer)
 
 ## API review
 
@@ -70,10 +71,10 @@ the other tests are hand-written or seeded properties, not claimed as official f
 | 13 | PASS | 1.0.0, Production/Stable, Python 3.10+, MIT, four project URLs, no runtime dependencies |
 | 14 | PASS | Wheel and sdist contents inspected and asserted, LICENSE in both, no downloaded references |
 | 15 | PASS | Each of the four gates exits 0; full suite includes installed-wheel e2e |
-| 16 | PENDING | Independent reviewer is a separate stage |
-| 17 | PENDING | Merge and publication are separate stages |
+| 16 | PASS | Independent reviewer round 1, every item PASS, no findings (see below) |
+| 17 | PASS | PR #3 from `release/1.0.0` to `main`, trace guard CLEAN; merge and publication by the maintainer |
 | 18 | PASS | Twenty isolated mutations, twenty detected failures, baseline and restored suite pass |
-| 19 | PENDING | Five independent QA lenses are a separate stage; no verdict claimed |
+| 19 | PASS | Lenses a to e each report PASS after their fix rounds (see below) |
 
 ## Packaging and end-to-end checks
 
@@ -357,7 +358,53 @@ exit codes are in `verify.py` and `results.json`; gate commands are in `gates.py
 Mutations exist only in scratch copies. Earlier scorecards, artifact hashes and
 interpreter results describe their own rounds.
 
+## QA lenses (item 19)
+
+Five independent lenses each ran their own checks and reported back. Every finding
+was fixed in the rounds above and re-verified by the same lens until it reported PASS.
+
+| Lens | Rounds | Final verdict | Report | Commit |
+| --- | --- | --- | --- | --- |
+| a. API and docs | 2 | PASS | laptop, `scratch/altsvc-cert/lens-a-r2/REPORT.md` | `4b49011ebc9d01b2bda27caf16d70dc317ee4f98` |
+| b. Correctness and ground truth | 2 | PASS | laptop, `scratch/altsvc-cert/lens-b-r2/REPORT.md` | `4b49011ebc9d01b2bda27caf16d70dc317ee4f98` |
+| c. Adversarial and robustness | 3 | PASS | laptop, `scratch/altsvc-cert/lens-c-r3/REPORT.md` | `6cd1786471fc6c04ffe674a722b3b3a1da9c3299` |
+| d. Packaging and real e2e | 2 | PASS | laptop, `scratch/altsvc-cert/lens-d-r2/REPORT.md` | `4b49011ebc9d01b2bda27caf16d70dc317ee4f98` |
+| e. Contract strength | 6 | PASS | `D:/pylib-scratch/altsvc-cert/lens-e-r6/REPORT.md` | `8112cbe8e79527ca56d92f73d3be8b4513470579` |
+
+Lens e round 6 re-checked E-R5-01 and E-R5-02 (both killed in source and installed-wheel
+runs) and swept ten further probes on parameter lookup: eight killed, two shown equivalent.
+
+## Independent reviewer (item 16)
+
+Round 1 at `8112cbe8e79527ca56d92f73d3be8b4513470579`, report
+`D:/pylib-scratch/altsvc-cert/review-r1/REPORT.md`. Verdict PASS, no findings.
+The reviewer ran the four gates, the suite with and without references (494 passed,
+no skips with `ALTSVC_E2E=1`), doctests, build and `twine check --strict`, a PyPI 0.2.0
+upgrade in a throwaway venv, an installed-wheel interpreter matrix and its own twelve
+mutants (eleven killed, one equivalent for the documented contract).
+
+| Item | Result | Evidence |
+| --- | --- | --- |
+| 1 | PASS | API pinned by stability and contract tests; changes in CHANGELOG |
+| 2 | PASS | Namespace equals `__all__`; no private imports in docs |
+| 3 | PASS | Examples on every public name; doctests and README/GUIDE examples pass |
+| 4 | PASS | `mypy --strict src tests`; `py.typed` shipped; no `Any` in public API |
+| 5 | PASS | Typed `AltSvcError(code, offset)`; codes documented; no input echo |
+| 6 | PASS | 494 tests cover every exported name and failure paths |
+| 7 | PASS | Eleven hash-verified fetched references with URL and date; urllib oracle |
+| 8 | PASS | Wheel e2e, PyPI 0.2.0 upgrade and both launchers in its own venv |
+| 9 | PASS | Seeded properties; own fuzz and scaling probes |
+| 10 | PASS | 3.10, 3.12, 3.13, 3.14 and 3.14t pass; 3.11 run in preparation, listed |
+| 11 | PASS | Strict twine check; absolute links; problem, why, install, quick start, links |
+| 12 | PASS | `[1.0.0] - 2026-11-02` with a Stable section |
+| 13 | PASS | 1.0.0, Production/Stable, 3.10 to 3.14, MIT, four URLs, keywords, no deps |
+| 14 | PASS | Contents inspected; LICENSE in both; no third-party files shipped |
+| 15 | PASS | Four gates exit 0 |
+| 16 | PASS | This review |
+| 17 | PASS | PR #3 from `release/1.0.0`, trace guard CLEAN; merge by the maintainer |
+| 18 | PASS | Twenty-row table plus round mutations; own re-check 11 of 12 killed, 1 equivalent |
+| 19 | PASS | Lens a-r2, b-r2, c-r3, d-r2 and e-r6 reports exist with verdict PASS |
+
 ## Remaining stages
 
-Confirmation by the same five QA lenses remains pending, as do the independent
-certification review, merge and publication.
+Merge of PR #3 and publication to PyPI are left to the maintainer.
