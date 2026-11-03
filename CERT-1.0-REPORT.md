@@ -11,6 +11,7 @@ Progress:
 - [x] Mutation round of at least ten deliberate defects
 - [x] Final four gates
 - [x] QA round 1: all twelve findings addressed; 406 tests passed
+- [x] QA round 3: E-04 and E-05 contracts added; both mutants detected; 437 tests passed
 - [ ] Independent reviewer (item 16, separate stage)
 - [ ] Five independent QA lenses (item 19, separate stage)
 - [ ] Merge and publication (item 17, separate stage)
@@ -230,6 +231,46 @@ Evidence paths relative to this checkout: `../../scratch/altsvc-cert/fix-r2/`.
 Logs: `red.log`, `green.log`, `n02-source.log`, `n02-wheel.log`, `full-gates.log`.
 The mutation driver and mutated copy remain in that scratch directory; no mutation
 was applied to the repository.
+
+## QA round 3
+
+Date: 2026-11-03. Reviewed base: `6cd1786471fc6c04ffe674a722b3b3a1da9c3299`.
+Fix commit: `286fbbd05556b9744351d7d231f923a6b6ef4c31`. Both findings addressed;
+none disputed. These were missing regression contracts: the reviewed implementation
+already returned the correct results. No library code, public API or behavior changed.
+CHANGELOG.md records the added coverage.
+
+| Finding | Change and verification |
+| --- | --- |
+| E-04 | Add source and installed-wheel contracts rejecting long-s lookalikes as persistence names, including a lookalike after an ASCII parameter. ASCII case variants still enable persistence. |
+| E-05 | Require `ma.invalid` for explicitly empty `ma`, `MA` and `Ma` through `ma`, `max_age`, `expires_at` and `is_fresh`. Both source and installed-wheel controls preserve the missing-parameter default and freshness boundary. |
+
+The 20 new hand-written source cases and installed-wheel check first passed on the
+unchanged implementation. Each exact reviewer mutation was then applied independently
+to a scratch source copy. Source imports were checked against that copy; the wheel was
+built from it and consumed under isolated Python from an empty directory, with the
+package's site-packages location asserted. Each detection below exited 1 because of
+the expected contract failure, without a collection error, build failure or timeout.
+
+| Mutation | Detecting contract | Result |
+| --- | --- | --- |
+| P05: replace ASCII name folding with Unicode `casefold()` | `test_non_ascii_lookalikes_cannot_enable_persistence` | Four source failures; 16 controls passed |
+| P05: installed wheel | `test_installed_wheel_end_to_end`, running `wheel_parameters.py` | Failed the false-persistence assertion |
+| P10: replace `return found` with `return found or None` | `test_empty_lifetime_is_invalid` | Twelve source failures; eight controls passed |
+| P10: installed wheel | `test_installed_wheel_end_to_end`, running `wheel_parameters.py` | Failed because empty `ma` did not raise `ma.invalid` |
+
+All four gates exited 0: `ruff format --check .`, `ruff check .`, `mypy --strict src`,
+and `pytest`. The stronger `mypy --strict src tests` also passed (39 files).
+CPython 3.14.6 passed **437 tests, no skips**, with `ALTSVC_E2E=1`, verified upstream
+fixtures and a 300-second per-test timeout. The wheel check built both distributions,
+upgraded the installed 0.2.0 release and exercised the new parameter consumer and both
+CLI launchers. The interpreter matrix was not repeated in this bounded fix round.
+
+Evidence paths relative to this checkout: `../../scratch/altsvc-cert/fix-r3/`.
+Logs: `baseline.log`, `P05-source.log`, `P05-wheel.log`, `P10-source.log`,
+`P10-wheel.log`, `full-gates.log` and `report-gates.log`. Exact mutation commands and
+exit codes are in `verify.py` and `results.json`. Mutations exist only in scratch copies.
+Earlier scorecards, artifact hashes and interpreter results describe their own rounds.
 
 ## Remaining stages
 
