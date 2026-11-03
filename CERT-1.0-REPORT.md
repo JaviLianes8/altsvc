@@ -13,6 +13,7 @@ Progress:
 - [x] QA round 1: all twelve findings addressed; 406 tests passed
 - [x] QA round 3: E-04 and E-05 contracts added; both mutants detected; 437 tests passed
 - [x] QA round 4: E-06 and E-07 contracts added; both mutants detected; 473 tests passed
+- [x] QA round 5: E-R5-01 and E-R5-02 contracts added; both mutants detected; 494 tests passed
 - [ ] Independent reviewer (item 16, separate stage)
 - [ ] Five independent QA lenses (item 19, separate stage)
 - [ ] Merge and publication (item 17, separate stage)
@@ -313,6 +314,48 @@ Logs: `baseline.log`, `M06-source.log`, `M06-wheel.log`, `M10-source.log`,
 `M10-wheel.log`, `full-gates.log` and `report-gates.log`. Exact mutation commands and
 exit codes are in `verify.py` and `results.json`. Mutations exist only in scratch copies.
 Earlier scorecards, artifact hashes and interpreter results describe their own rounds.
+
+## QA round 5
+
+Date: 2026-11-03. Reviewed base: `5187e9af8359e462093df65e207ecac21ee91b2e`.
+Fix commit: `77f4c44ba832cc6be20a111a7bca2e753b228ab4`. Both findings addressed;
+none disputed. These were missing contract cases: the reviewed implementation already
+returned the correct results. No library source, public API or behavior changed.
+CHANGELOG.md records the added coverage.
+
+| Finding | Change and verification |
+| --- | --- |
+| E-R5-01 | Add source and installed-wheel contracts keeping space/tab-padded parameter names unmatched through `ma`, `max_age` and `persist`. Check both missing parameters and a padded spelling following an existing matching parameter. |
+| E-R5-02 | Add source and installed-wheel contracts requiring `TypeError` through all three accessors for an items-only object that is not a `Mapping`. Retain acceptance controls for `UserDict` and `MappingProxyType`. |
+
+The 21 new hand-written source cases first passed against the unchanged implementation.
+The targeted baseline, including the installed-wheel test, passed all 78 cases. Each
+exact reviewer mutation was applied independently to a scratch source copy. Source
+imports were checked against that copy; each wheel was built from its mutated copy
+and consumed under isolated Python from an empty directory, with site-packages asserted.
+All detections exited 1 on the intended contract failure, with no collection error,
+build failure or timeout.
+
+| Mutation | Detecting contract | Result |
+| --- | --- | --- |
+| S03: append `.strip()` to `str.__str__(key)` | `test_whitespace_padded_parameter_names_remain_unmatched` | 18 source failures; 59 controls passed |
+| S03: installed wheel | `test_installed_wheel_end_to_end`, running `wheel_parameters.py` | Failed because the padded lifetime name matched instead of returning `None` |
+| S07: replace `isinstance(params, Mapping)` with `hasattr(params, "items")` | `test_parameter_accessors_reject_items_only_non_mappings` | Three source failures; 74 controls passed |
+| S07: installed wheel | `test_installed_wheel_end_to_end`, running `wheel_parameters.py` | Failed because the items-only object did not raise `TypeError` |
+
+All four gates exited 0: `ruff format --check .`, `ruff check .`, `mypy --strict src`,
+and `pytest`. The stronger `mypy --strict src tests` also passed (39 files).
+CPython 3.14.6 passed **494 tests, no skips**, with `ALTSVC_E2E=1`, eleven hash-verified
+upstream fixtures and a 300-second per-test timeout. The wheel check built both
+distributions, upgraded the installed 0.2.0 release and exercised the parameter consumer
+and both CLI launchers. The interpreter matrix was not repeated in this bounded round.
+
+Evidence paths relative to this checkout: `../../scratch/altsvc-cert/fix-r5/`.
+Logs: `baseline.log`, `S03-source.log`, `S03-wheel.log`, `S07-source.log`,
+`S07-wheel.log`, `full-gates.log` and `report-gates.log`. Exact mutation commands and
+exit codes are in `verify.py` and `results.json`; gate commands are in `gates.py`.
+Mutations exist only in scratch copies. Earlier scorecards, artifact hashes and
+interpreter results describe their own rounds.
 
 ## Remaining stages
 
