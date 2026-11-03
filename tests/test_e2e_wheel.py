@@ -127,6 +127,16 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
         report = json.loads(shown.stdout)
         assert report["valid"] is True
         assert [a["alpn"] for a in report["alternatives"]] == ["h3", "h3-29"]
+        for field in ('h3=":443", clear', 'clear, h3=":443"'):
+            cleared = _run(*command, field, cwd=work)
+            assert cleared.returncode == 1
+            report = json.loads(cleared.stdout)
+            assert report["clear"] is True and report["alternatives"] == []
+        marker = "SENSITIVE_SENTINEL_7f8c"
+        for args in (["--" + marker * 400], ["clear", marker * 400]):
+            rejected = _run(*command, *args, cwd=work)
+            assert rejected.returncode == 2 and not rejected.stdout
+            assert marker.encode() not in rejected.stderr and len(rejected.stderr) < 300
     bad = _run(script, 'h3=":443", clear', cwd=work)
     assert bad.returncode == 1 and json.loads(bad.stdout)["clear"] is True
     usage = _run(script, cwd=work, stdin=b"HTTP/1.1 200 OK\r\n\r\n")

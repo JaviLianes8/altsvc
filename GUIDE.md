@@ -4,6 +4,7 @@
 
 `parse(value, *, strict=False)` accepts a string or a sequence of strings. Several
 field lines are joined with comma and space; offsets refer to that joined value.
+`strict` must be a bool; other types raise `TypeError`.
 The default returns usable alternatives in wire order, or `CLEAR`. Strict mode raises
 `AltSvcError` on the first error; warnings do not prevent parsing. `lint(value)` returns
 all findings sorted by offset. Recovery from malformed values is library policy.
@@ -14,15 +15,20 @@ around alternatives, but not around `clear`. An entirely empty value is an error
 
 Parameter names are compared using ASCII case folding. The last occurrence wins, even
 when spellings alternate in case. Invalid earlier `ma` values still produce diagnostics.
-Unknown parameters are retained. Only `persist=1` is effective. Decimal `ma` is capped
+Unknown parameters are retained. Persistence is the exception: values other than `1`
+are ignored before storage and cannot cancel an earlier `persist=1`. Decimal `ma` is capped
 at 2147483648, without converting unbounded digit strings. Absence means 86400 seconds.
 
 `Alternative(protocol, authority, params={})` is a mutable, unvalidated data container.
-Each instance gets its own default dictionary. Accessors validate the relevant part;
+Each instance gets its own default dictionary. Accessors validate the relevant part:
+authority accessors require a string, and parameter accessors require a mapping with
+string keys and values. Wrong types, including a present `ma=None`, raise `TypeError`.
 `Alternative.of(alpn, port, host='', *, ma=None, persist=False, params=None)` validates
 the complete value through the builder and copies the supplied mapping. Explicit `ma`
 and true `persist` replace those exact lower-case keys; conflicting case variants are
 rejected by the builder. False `persist` leaves supplied parameters unchanged.
+Host, port and lifetime subclasses are normalized to their underlying primitive values
+before validation and serialization; custom formatting cannot replace those values.
 
 `build` accepts `CLEAR` or a nonempty sequence of alternatives. Its output parses
 strictly back to equal alternatives. It rejects ambiguous duplicate parameter names,
@@ -64,7 +70,8 @@ assert not is_fresh(service, 100.0, 130.0, age=30)
 
 Wrong argument types raise `TypeError`; invalid values raise `AltSvcError`, a
 `ValueError` subclass with `code`, `message`, and optional `offset`. `Issue` is frozen,
-with `code`, `message`, `severity` (`error` or `warning`), and optional `offset`.
+with `code`, `message`, `severity` (`error` or `warning`), and optional `offset`, and
+has no writable instance dictionary. Errors include documented additional library policy.
 Constructors for `Alternative`, `Issue`, and `AltSvcError` store the caller's fields;
 they do not sanitize or validate arbitrary objects supplied directly to them.
 
@@ -77,6 +84,10 @@ Processing is linear in input length apart from sorting findings by offset. Ther
 no arbitrary input-size cap; callers should enforce their own HTTP field-size limit.
 
 ## Command line
+
+Usage errors print bounded diagnostics without argument contents. Use `--` before a
+field value starting with a hyphen. When `clear` is present, JSON lists no effective
+alternatives, including when mixed-list errors are reported.
 
 `altsvc VALUE` and `python -m altsvc VALUE` check one field. Without an argument they
 read standard input as Latin-1, preserving every input byte. A response head may contain

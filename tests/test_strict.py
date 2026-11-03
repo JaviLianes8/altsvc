@@ -34,9 +34,7 @@ def test_strict_raises_the_first_error_with_code_and_offset(
 
 def test_warnings_do_not_make_strict_raise() -> None:
     value = 'h3=":443"; ma=1; ma=2; persist=yes; ma=99999999999'
-    assert parse(value, strict=True) == [
-        Alternative("h3", ":443", {"ma": "99999999999", "persist": "yes"})
-    ]
+    assert parse(value, strict=True) == [Alternative("h3", ":443", {"ma": "99999999999"})]
 
 
 def test_strict_reads_clear() -> None:

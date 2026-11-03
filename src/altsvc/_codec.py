@@ -91,6 +91,8 @@ def split_authority(authority: str) -> tuple[str, int]:
     65535. Library policy beyond RFC 3986: an empty port and port 0 cannot be connected
     to, and IPvFuture literals and zone IDs are refused.
     """
+    if not isinstance(authority, str):
+        raise TypeError("authority must be a str")
     host, colon, port = authority.rpartition(":")
     if not colon:
         raise AltSvcError("no ':port' in alt-authority", code="authority.port")

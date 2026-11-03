@@ -21,8 +21,12 @@ def read_delta_seconds(text: str) -> int | None:
 
 def find_param(params: Mapping[str, str], name: str) -> str | None:
     """The last value of a parameter, names compared with ASCII case folding."""
+    if not isinstance(params, Mapping):
+        raise TypeError("params must be a mapping of str to str")
     found = None
     for key, value in params.items():
+        if not isinstance(key, str) or not isinstance(value, str):
+            raise TypeError("params must be a mapping of str to str")
         if ascii_lower(key) == name:
             found = value
     return found

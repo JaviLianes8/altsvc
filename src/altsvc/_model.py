@@ -34,7 +34,8 @@ class Alternative:
 
     ``protocol`` is the protocol-id as written in the field (percent-encoded), ``authority``
     the content of the quoted alt-authority, ``[host]:port``. The properties read the
-    parts; they raise :class:`AltSvcError` when the part they read is not valid.
+    parts; they raise :class:`TypeError` for wrong stored types and :class:`AltSvcError`
+    for invalid values in the part they read.
 
     >>> from altsvc import Alternative
     >>> Alternative('h3', ':443').max_age
@@ -67,6 +68,7 @@ class Alternative:
         """
         if isinstance(port, bool) or not isinstance(port, int):
             raise TypeError("port must be an int")
+        port = int.__int__(port)
         if not 1 <= port <= 65535:
             raise AltSvcError("port must be 1 to 65535", code="authority.port")
         if params is not None and not isinstance(params, Mapping):
@@ -75,6 +77,7 @@ class Alternative:
         if ma is not None:
             if isinstance(ma, bool) or not isinstance(ma, int):
                 raise TypeError("ma must be an int number of seconds")
+            ma = int.__int__(ma)
             if not 0 <= ma <= DELTA_SECONDS_MAX:
                 raise AltSvcError("ma must be digits from 0 to 2147483648", code="ma.invalid")
             extra["ma"] = str(ma)
@@ -84,6 +87,7 @@ class Alternative:
             extra["persist"] = "1"
         if not isinstance(host, str):
             raise TypeError("host must be a str")
+        host = str.__str__(host)
         if host.startswith("[") and host.endswith("]"):
             host = host[1:-1]
         made = cls(encode_protocol_id(alpn), join_authority(host, port), extra)

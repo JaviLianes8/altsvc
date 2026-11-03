@@ -31,8 +31,9 @@ class AltSvcError(ValueError):
 class Issue:
     """One finding about an Alt-Svc field value.
 
-    An ``error`` breaks RFC 7838 (its grammar or one of its MUSTs); a ``warning`` marks
-    something legal that is likely a mistake.
+    An ``error`` breaks RFC 7838 (its grammar or one of its MUSTs) or the additional
+    library policy documented in the guide; a ``warning`` marks something legal that
+    is likely a mistake. Findings are frozen and have no writable instance dictionary.
 
     >>> from altsvc import Issue
     >>> Issue('empty', 'empty value', 'error', 0).severity

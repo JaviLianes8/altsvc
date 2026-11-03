@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 from collections.abc import Sequence
+from typing import NoReturn
 
 from ._errors import Issue
 from ._head import field_lines
@@ -14,6 +15,12 @@ from ._model import Alternative
 
 EXIT_INVALID = 1
 EXIT_USAGE = 2
+
+
+class _ArgumentParser(argparse.ArgumentParser):
+    def error(self, message: str) -> NoReturn:
+        self.print_usage(sys.stderr)
+        self.exit(EXIT_USAGE, "altsvc: invalid arguments; use --help for usage\n")
 
 
 def _issue(issue: Issue) -> dict[str, object]:
@@ -39,7 +46,7 @@ def _alternative(alternative: Alternative) -> dict[str, object]:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the command line; returns the process exit code."""
-    parser = argparse.ArgumentParser(
+    parser = _ArgumentParser(
         prog="altsvc",
         description="Check an Alt-Svc value, or the response head read from standard input "
         "(for example the output of curl -sI). Prints the alternatives and the findings as "
@@ -69,7 +76,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if ignored:
         message = "a 421 (Misdirected Request) response's Alt-Svc must be ignored"
         issues.append(Issue("status.421", message, "error"))
-    usable = [] if ignored else analysis.alternatives
+    usable = [] if ignored or analysis.clear else analysis.alternatives
     report: dict[str, object] = {
         "field": ", ".join(fields),
         "valid": not analysis.errors,

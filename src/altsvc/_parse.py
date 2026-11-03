@@ -20,11 +20,14 @@ def parse(value: str | Sequence[str], *, strict: bool = False) -> list[Alternati
     offset. The default tolerant mode keeps every alternative whose protocol-id,
     authority and ``ma`` are sound, and ignores broken parameters of other names; this is
     a robustness choice of this library, see :func:`lint` for what was skipped.
+    ``strict`` must be a bool; wrong argument types raise :class:`TypeError`.
 
     >>> from altsvc import CLEAR, parse
     >>> parse('clear') is CLEAR
     True
     """
+    if not isinstance(strict, bool):
+        raise TypeError("strict must be a bool")
     analysis = analyse(value)
     if strict and analysis.errors:
         first = analysis.errors[0]

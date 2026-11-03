@@ -18,9 +18,10 @@ def build(alternatives: Sequence[Alternative] | Clear) -> str:
     written, so the result always reads back strictly to the same alternatives: a
     canonical protocol-id, an authority with a valid host and a port from 1 to 65535,
     parameter names that are tokens and differ beyond case, values without control
-    characters or non-ASCII text, ``ma`` as digits up to 2^31 and ``persist`` only as
-    ``1``. The authority is always quoted; parameter values are left as tokens when they
-    are tokens and quoted otherwise. Anything else raises :class:`AltSvcError`.
+    characters (except horizontal tab) or non-ASCII text, ``ma`` as digits up to 2^31
+    and ``persist`` only as ``1``. The authority is always quoted; parameter values are
+    left as tokens when they are tokens and quoted otherwise. Wrong types raise
+    :class:`TypeError`; invalid values raise :class:`AltSvcError`.
 
     >>> from altsvc import CLEAR, build
     >>> build(CLEAR)

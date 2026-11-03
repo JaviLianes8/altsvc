@@ -72,7 +72,7 @@ def _params(entry: Entry, issues: list[Issue]) -> dict[str, str]:
     for name, value, offset in entry.params:
         key = ascii_lower(name)
         if key in seen:
-            message = "parameter name repeats; the last value is used"
+            message = "parameter name repeats; the last non-ignored value is used"
             issues.append(Issue("parameter.duplicate", message, "warning", offset))
         seen.add(key)
         if key == "ma":
@@ -87,6 +87,7 @@ def _params(entry: Entry, issues: list[Issue]) -> dict[str, str]:
         elif key == "persist" and value != "1":
             message = "persist value is ignored; only persist=1 has a meaning"
             issues.append(Issue("persist.ignored", message, "warning", offset))
+            continue
         # Re-inserting preserves wire order even when an exact spelling repeats.
         params.pop(name, None)
         params[name] = value

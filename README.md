@@ -86,15 +86,16 @@ print(parse(build([alt]), strict=True) == [alt])
 ```
 
 `build` checks every part before writing it and raises `AltSvcError` rather than write a
-value that would not read back: control characters and non-ASCII text (no header
-injection through CR LF), a protocol-id that is not in canonical form, a host that is not
-an ASCII reg-name or IP literal, a port outside 1 to 65535, an `ma` that is not digits up
-to 2^31, `persist` other than `1`, and parameter names that repeat up to case.
+value that would not read back: control characters except horizontal tab and non-ASCII
+text (no header injection through CR LF), a protocol-id that is not in canonical form,
+a host that is not an ASCII reg-name or IP literal, a port outside 1 to 65535, an `ma`
+that is not digits up to 2^31, `persist` other than `1`, and parameter names that repeat up to case.
 
 The guarantee runs one way: whatever `build` writes reads back strictly to the same
 alternatives. Not every value that reads strictly can be built again, because `build` also
-refuses legal values that a sender has no reason to write, such as `persist=yes`, an `ma`
-above 2^31, non-ASCII text in a quoted value, or `ma` and `MA` side by side.
+refuses legal values that a sender has no reason to write, such as an `ma` above 2^31,
+non-ASCII text in a quoted value, or `ma` and `MA` side by side. Parsing discards ignored
+`persist` values, so they cannot cancel an earlier `persist=1`.
 
 ## Freshness
 

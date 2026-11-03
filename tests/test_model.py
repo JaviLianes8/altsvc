@@ -49,7 +49,7 @@ def test_parameter_names_are_matched_without_case_and_the_last_wins() -> None:
     alternative = _one('h3=":443"; MA=1; Persist=1; ma=2')
     assert alternative.ma == 2
     assert alternative.persist is True
-    assert _one('h3=":443"; persist=1; persist=0').persist is False
+    assert _one('h3=":443"; persist=1; persist=0').persist is True
 
 
 def test_persist_means_only_the_value_one() -> None:

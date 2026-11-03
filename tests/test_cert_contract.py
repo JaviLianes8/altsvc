@@ -38,7 +38,7 @@ def test_guide_examples_execute() -> None:
 
 
 def test_exact_spelling_reinserted_after_other_case_variants() -> None:
-    for name in ("ma", "persist"):
+    for name in ("ma", "x"):
         result = altsvc.parse(f'h3=":443"; {name}=1; {name.upper()}=2; {name}=3')
         assert isinstance(result, list)
         assert list(result[0].params.items()) == [(name.upper(), "2"), (name, "3")]
