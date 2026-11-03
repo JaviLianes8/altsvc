@@ -16,6 +16,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Source and installed-wheel contracts now require ASCII-only parameter matching and
+  `ma.invalid` for explicitly empty lifetimes, including freshness helpers. Missing
+  lifetimes retain the default; existing library behavior is unchanged.
 - Authority and parameter accessors read the underlying characters of accepted string
   subclasses, matching serialization for destinations, lifetimes and persistence.
   Stored constructor values remain unchanged; freshness helpers use the same lifetimes.

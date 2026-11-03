@@ -116,6 +116,8 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
     result = _run(python, "-I", "-c", PROGRAM, cwd=work)
     assert result.returncode == 0, result.stderr
     assert result.stdout.decode().strip() == "e2e ok"
+    parameters = _run(python, "-I", ROOT / "tests" / "wheel_parameters.py", cwd=work)
+    assert parameters.returncode == 0, parameters.stderr
     version = _run(python, "-I", "-c", "import altsvc; assert altsvc.__version__ == '1.0.0'")
     assert version.returncode == 0, version.stderr
 
