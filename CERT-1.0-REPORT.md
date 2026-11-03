@@ -10,6 +10,7 @@ Progress:
 - [x] Every available supported interpreter
 - [x] Mutation round of at least ten deliberate defects
 - [x] Final four gates
+- [x] QA round 1: all twelve findings addressed; 406 tests passed
 - [ ] Independent reviewer (item 16, separate stage)
 - [ ] Five independent QA lenses (item 19, separate stage)
 - [ ] Merge and publication (item 17, separate stage)
@@ -155,8 +156,45 @@ On CPython 3.14.6, each command exited 0: `ruff format --check .`, `ruff check .
 (33 source files). Pytest with `ALTSVC_E2E=1` and the verified source downloads passed
 all 297 tests, no skips. Scratch paths were supplied for pytest temporary directories.
 
+## QA round 1
+
+Date: 2026-11-03. Reviewed base: `1bd1ae88c28c46695fdecbae2a31c2c4989e0eff`.
+Fix commit: `e1e12d587a890c3c3a3c06a9508cf929a832ff7c`. All twelve findings addressed,
+none disputed. The earlier scorecard and hashes describe preparation before this round.
+
+| Finding | Change and verification |
+| --- | --- |
+| A01 | Require boolean `strict`; six wrong-type contract cases |
+| A02, C-01 | Validate authority and parameter storage types, reject present `ma=None`, and propagate validation through freshness helpers; malformed-field and independent-accessor contracts |
+| A03 | State the horizontal-tab exception in README, CHANGELOG and the builder docstring |
+| A04 | Define error severity to include documented library policy in the Issue docstring |
+| A05 | Distinguish wrong-type TypeError from invalid-value AltSvcError in the builder docstring |
+| B-001 | Discard ignored persistence values before storage; preserve earlier `persist=1` across case variants and quoted values; 42 strict/tolerant regression cases; update previous conflicting expectations |
+| C-02 | Normalize host, port and lifetime subclasses before validation and serialization; underlying-value and range contracts |
+| C-03 | Use constant, bounded CLI usage diagnostics; subprocess checks for unknown options, excess arguments and help values, including large synthetic markers |
+| D-001 | Suppress effective CLI alternatives when clear is present; subprocess checks in both list orders, piped heads and both installed launchers |
+| E-01 | Protect Issue from a writable instance dictionary; M37 now fails the new contract |
+| E-02 | Assert protocol-id.empty for empty bytes and text; M49 now fails both cases |
+
+Hand-written regressions ran before implementation changes. Replaying the API and
+factory contracts on the reviewed source confirmed 94 failures and five passes.
+The initial subprocess run demonstrated both CLI bugs. After correcting Windows
+newline translation in the piped test harness, all 109 new cases pass.
+
+Scratch mutation copies, with imported paths checked, produced one failure for M37
+and two for M49. No mutation was left in the repository.
+
+All four gates exited 0: `ruff format --check .`, `ruff check .`, `mypy --strict src`,
+and `pytest`. Strict source/test typing also passed (36 files). CPython 3.14.6 passed
+**406 tests, no skips**, with `ALTSVC_E2E=1`, verified fixtures and `--timeout=300`.
+The wheel test built distributions, upgraded 0.2.0 and checked both CLI launchers.
+The interpreter matrix was not repeated this round; earlier results remain above.
+
+Evidence and temporary paths, relative to this checkout: `../../scratch/altsvc-cert/fix-r1/`.
+Logs: `red.log`, `original-verified.log`, `M37-verified.log`, `M49-verified.log`,
+`final.log`, `report-gates.log`. Behavior changes are recorded in CHANGELOG.md.
+
 ## Remaining stages
 
-Independent reviewer and QA lenses a, b, c, d and e have not run for this release.
-No earlier verdict applies. The release branch is prepared for those stages; merging
-and publication remain pending.
+Confirmation by the same five QA lenses remains pending, as do the independent
+certification review, merge and publication.
