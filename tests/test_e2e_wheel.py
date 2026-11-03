@@ -127,6 +127,16 @@ def test_installed_wheel_end_to_end(tmp_path: Path) -> None:
         report = json.loads(shown.stdout)
         assert report["valid"] is True
         assert [a["alpn"] for a in report["alternatives"]] == ["h3", "h3-29"]
+        ignored = _run(
+            *command,
+            cwd=work,
+            stdin=b'HTTP/1.1 421 Misdirected Request\r\nAlt-Svc: h3=":443"\r\n\r\n',
+        )
+        assert ignored.returncode == 1
+        report = json.loads(ignored.stdout)
+        assert report["ignored"] is True
+        assert "status.421" in [issue["code"] for issue in report["issues"]]
+        assert report["alternatives"] == []
         for field in ('h3=":443", clear', 'clear, h3=":443"'):
             cleared = _run(*command, field, cwd=work)
             assert cleared.returncode == 1

@@ -93,6 +93,7 @@ def split_authority(authority: str) -> tuple[str, int]:
     """
     if not isinstance(authority, str):
         raise TypeError("authority must be a str")
+    authority = str.__str__(authority)
     host, colon, port = authority.rpartition(":")
     if not colon:
         raise AltSvcError("no ':port' in alt-authority", code="authority.port")

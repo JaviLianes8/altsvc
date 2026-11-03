@@ -35,6 +35,15 @@ def test_clear_suppresses_effective_alternatives(field: str, piped: bool) -> Non
     assert report["issues"][0]["code"] == "clear.mixed"
 
 
+def test_421_suppresses_effective_alternatives() -> None:
+    result = _run([], 'HTTP/1.1 421 Misdirected Request\nAlt-Svc: h3=":443"\n\n')
+    assert result.returncode == 1
+    report = json.loads(result.stdout)
+    assert report["ignored"] is True
+    assert "status.421" in [issue["code"] for issue in report["issues"]]
+    assert report["alternatives"] == []
+
+
 @pytest.mark.parametrize("kind", ["option", "positional", "help-value"])
 @pytest.mark.parametrize("repeats", [1, 400])
 def test_usage_errors_do_not_echo_arguments(kind: str, repeats: int) -> None:

@@ -27,6 +27,6 @@ def find_param(params: Mapping[str, str], name: str) -> str | None:
     for key, value in params.items():
         if not isinstance(key, str) or not isinstance(value, str):
             raise TypeError("params must be a mapping of str to str")
-        if ascii_lower(key) == name:
-            found = value
+        if ascii_lower(str.__str__(key)) == name:
+            found = str.__str__(value)
     return found

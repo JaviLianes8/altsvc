@@ -16,6 +16,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Authority and parameter accessors read the underlying characters of accepted string
+  subclasses, matching serialization for destinations, lifetimes and persistence.
+  Stored constructor values remain unchanged; freshness helpers use the same lifetimes.
+- CLI contracts now require empty effective alternatives for HTTP 421 responses in
+  both source and installed-wheel runs. Existing CLI behavior is unchanged.
 - `parse` requires a boolean `strict`; other types raise `TypeError`.
 - `Alternative` accessors reject wrong authority types and malformed parameter
   mappings with `TypeError`, including a present `ma=None` instead of treating it as
